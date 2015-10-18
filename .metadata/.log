@@ -1,0 +1,20 @@
+!SESSION 2015-10-18 18:04:07.058 -----------------------------------------------
+eclipse.buildId=M20130204-1200
+java.version=1.8.0_40
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=es_ES
+Command-line arguments:  -data C:\Users\Xabier\Desktop\Trabajos Universidad\Master\1º\Sistemas Distribuidos\bitTorrent -os win32 -ws win32 -arch x86_64
+
+!ENTRY org.eclipse.mylyn.tasks.ui 2 0 2015-10-18 18:04:14.660
+!MESSAGE No search provider was registed. Tasks search is not available.
+
+!ENTRY org.tigris.subversion.subclipse.core 4 0 2015-10-18 18:06:17.737
+!MESSAGE Could not auto-share project SSDD-Tracker-003
+!STACK 1
+org.tigris.subversion.subclipse.core.SVNException: Provided SVN information does not match that on disk for project 'SSDD-Tracker-003'.
+	at org.tigris.subversion.subclipse.core.resources.SVNWorkspaceRoot.setSharing(SVNWorkspaceRoot.java:206)
+	at org.tigris.subversion.subclipse.core.SVNTeamProviderType$AutoShareJob.autoconnectSVNProject(SVNTeamProviderType.java:140)
+	at org.tigris.subversion.subclipse.core.SVNTeamProviderType$AutoShareJob.run(SVNTeamProviderType.java:106)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:53)
+!SUBENTRY 1 org.tigris.subversion.subclipse.core 4 4 2015-10-18 18:06:17.739
+!MESSAGE Provided SVN information does not match that on disk for project 'SSDD-Tracker-003'.
