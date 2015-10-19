@@ -6,8 +6,12 @@ import java.awt.Insets;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import java.awt.event.ActionListener;
+import java.util.regex.Pattern;
+import java.awt.event.ActionEvent;
 
 public class Configuracion extends JPanel {
 
@@ -15,8 +19,16 @@ public class Configuracion extends JPanel {
 	private JTextField textField;
 	private JTextField textField_1;
 	private JTextField textField_2;
+	private Pattern pattern;
+	private static final String IPADDRESS_PATTERN = 
+			"^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
+			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 	
 	public Configuracion() {
+		pattern = Pattern.compile(IPADDRESS_PATTERN);
+	    
 		GridBagLayout gbl_c = new GridBagLayout();
 		gbl_c.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_c.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
@@ -42,6 +54,15 @@ public class Configuracion extends JPanel {
 		textField.setColumns(20);
 		
 		JButton btnIniciarparar = new JButton("Iniciar/Parar");
+		btnIniciarparar.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (pattern.matcher(textField.getText()).matches()) {
+					
+				} else {
+					JOptionPane.showMessageDialog(null, "IP invalida", "ERROR", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		});
 		GridBagConstraints gbc_btnIniciarparar = new GridBagConstraints();
 		gbc_btnIniciarparar.insets = new Insets(0, 0, 5, 5);
 		gbc_btnIniciarparar.gridx = 1;

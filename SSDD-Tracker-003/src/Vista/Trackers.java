@@ -18,7 +18,7 @@ public class Trackers extends JPanel {
 	public Trackers() {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 450, 0, 0};
-		gridBagLayout.rowHeights = new int[]{34, 14, 0, 220, 0, 0};
+		gridBagLayout.rowHeights = new int[]{0, 14, 0, 220, 34, 0};
 		gridBagLayout.columnWeights = new double[]{1.0, 1.0, 1.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{1.0, 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
 		setLayout(gridBagLayout);
