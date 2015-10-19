@@ -85,5 +85,7 @@ public class Configuracion extends JPanel {
 		gbc_textField_2.gridy = 7;
 		panel.add(textField_2, gbc_textField_2);
 		textField_2.setColumns(10);
+		
+		panel.setVisible(true);
 	}
 }

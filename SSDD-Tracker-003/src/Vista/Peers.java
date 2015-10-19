@@ -46,5 +46,7 @@ public class Peers extends JPanel {
 		table2.setModel(dtm2);
 		
 		scrollPane_1.setViewportView(table2);
+		
+		panel_2.setVisible(true);
 	}
 }

@@ -41,5 +41,7 @@ public class Trackers extends JPanel {
 		table.setModel(dtm);
 		
 		scrollPane.setViewportView(table);
+		
+		panel_1.setVisible(true);
 	}
 }
