@@ -43,13 +43,13 @@ public class TrackerMain extends JFrame {
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		contentPane.add(tabbedPane, BorderLayout.CENTER);
 		
-		JPanel panel = new JPanel();
-		tabbedPane.addTab("Configuración", null, new Configuracion(panel), null);
+		tabbedPane.addTab("Configuración", null, new Configuracion(), null);
 				
-		JPanel panel_1 = new JPanel();
-		tabbedPane.addTab("Trackers", null, new Trackers(panel_1), null);
+		tabbedPane.addTab("Trackers", null, new Trackers(), null);
 		
-		JPanel panel_2 = new JPanel();
-		tabbedPane.addTab("Peers", null, new Peers(panel_2), null);
+		tabbedPane.addTab("Peers", null, new Peers(), null);
+		
+		setResizable(false);
+		setLocationRelativeTo(null);
 	}
 }
