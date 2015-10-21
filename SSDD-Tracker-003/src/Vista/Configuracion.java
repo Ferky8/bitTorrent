@@ -20,14 +20,20 @@ public class Configuracion extends JPanel {
 	private JTextField textField_1;
 	private JTextField textField_2;
 	private Pattern pattern;
+	private Pattern pattern_2;
+	
 	private static final String IPADDRESS_PATTERN = 
 			"^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
 			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
 			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
 			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 	
+	private static final String PORT_PATTERN = 
+			"^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$";
+	
 	public Configuracion() {
 		pattern = Pattern.compile(IPADDRESS_PATTERN);
+		pattern_2 = Pattern.compile(PORT_PATTERN);
 	    
 		GridBagLayout gbl_c = new GridBagLayout();
 		gbl_c.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
@@ -56,10 +62,18 @@ public class Configuracion extends JPanel {
 		JButton btnIniciarparar = new JButton("Iniciar/Parar");
 		btnIniciarparar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (pattern.matcher(textField.getText()).matches()) {
-					
-				} else {
+				//Si estan mal la IP y el puerto
+				if (!(pattern.matcher(textField.getText()).matches()) && !(pattern_2.matcher(textField_1.getText()).matches())) {
+					JOptionPane.showMessageDialog(null, "IP y puerto invalidos", "ERROR", JOptionPane.ERROR_MESSAGE);
+				//Si esta mal solo la IP
+				} else if (!(pattern.matcher(textField.getText()).matches())){
 					JOptionPane.showMessageDialog(null, "IP invalida", "ERROR", JOptionPane.ERROR_MESSAGE);
+				//Si esta mal solo el puerto
+				}else if (!(pattern_2.matcher(textField_1.getText()).matches())){
+					JOptionPane.showMessageDialog(null, "Puerto invalido", "ERROR", JOptionPane.ERROR_MESSAGE);
+				//Si esta todo bien
+				} else{
+					
 				}
 			}
 		});
@@ -86,6 +100,11 @@ public class Configuracion extends JPanel {
 		textField_1.setColumns(20);
 		
 		JButton btnDesconectar = new JButton("Desconectar");
+		btnDesconectar.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JOptionPane.showConfirmDialog(null, "¿Seguro que deseas desconectar?", "ATENCIÓN", JOptionPane.YES_NO_OPTION);
+			}
+		});
 		GridBagConstraints gbc_btnDesconectar = new GridBagConstraints();
 		gbc_btnDesconectar.insets = new Insets(0, 0, 5, 5);
 		gbc_btnDesconectar.gridx = 1;
