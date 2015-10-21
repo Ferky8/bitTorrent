@@ -5,13 +5,17 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.util.Observable;
+import java.util.Observer;
 
-public class Trackers extends JPanel {
+public class Trackers extends JPanel implements Observer {
 
 	private static final long serialVersionUID = 1L;
+		
 	private JTable table;
 	private DefaultTableModel dtm;
 	
@@ -56,5 +60,11 @@ public class Trackers extends JPanel {
 		dtm.addColumn("Master");
 		dtm.addColumn("Último KA");
 		table.setModel(dtm);
+	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		// TODO Auto-generated method stub
+		
 	}
 }

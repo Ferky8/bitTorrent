@@ -5,6 +5,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
+import Controlador.ControladorDetallesPeer;
+
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -12,6 +15,8 @@ import java.awt.Insets;
 public class Peers extends JPanel {
 
 	private static final long serialVersionUID = 1L;
+	
+	private ControladorDetallesPeer detallesPeer;
 	
 	private JTable table2;
 	private DefaultTableModel dtm2;
@@ -61,5 +66,9 @@ public class Peers extends JPanel {
 		dtm2.addColumn("Subida");
 		
 		table2.setModel(dtm2);
+	}
+	
+	public void cargarDatos() {
+		detallesPeer.cargarDatos();
 	}
 }

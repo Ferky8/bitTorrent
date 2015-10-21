@@ -5,15 +5,15 @@ import Modelo.GestorDeTrackerBitTorrent;
 public class ControladorConfiguracion {
 	private GestorDeTrackerBitTorrent gestorDeTracker;
 	
-	public void iniciar() {
-		gestorDeTracker.iniciar();
+	public void iniciar(String IP, int puerto, int ID) {
+		gestorDeTracker.iniciar(IP, puerto, ID);
 	}
 	
-	public void parar() {
-		gestorDeTracker.parar();
+	public void parar(int ID) {
+		gestorDeTracker.parar(ID);
 	}
 	
-	public void desconectar() {
-		gestorDeTracker.desconectar();
+	public void desconectar(int ID) {
+		gestorDeTracker.desconectar(ID);
 	}
 }

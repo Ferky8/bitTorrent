@@ -9,15 +9,15 @@ public class GestorDeTrackerBitTorrent {
 		
 	}
 	
-	public void iniciar() {
+	public void iniciar(String IP, int puerto, int ID) {
 		
 	}
 	
-	public void parar() {
+	public void parar(int ID) {
 		
 	}
 	
-	public void desconectar() {
+	public void desconectar(int ID) {
 		
 	}
 

@@ -9,6 +9,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+
+import Controlador.ControladorConfiguracion;
+
 import java.awt.event.ActionListener;
 import java.util.regex.Pattern;
 import java.awt.event.ActionEvent;
@@ -16,6 +19,9 @@ import java.awt.event.ActionEvent;
 public class Configuracion extends JPanel {
 
 	private static final long serialVersionUID = 1L;
+	
+	private ControladorConfiguracion configuracion;
+	
 	private JTextField textField;
 	private JTextField textField_1;
 	private JTextField textField_2;
@@ -126,5 +132,17 @@ public class Configuracion extends JPanel {
 		gbc_textField_2.gridy = 5;
 		add(textField_2, gbc_textField_2);
 		textField_2.setColumns(20);
+	}
+	
+	public void iniciar(String IP, int puerto, int ID) {
+		configuracion.iniciar(IP, puerto, ID);
+	}
+	
+	public void parar(int ID) {
+		configuracion.parar(ID);
+	}
+	
+	public void desconectar(int ID) {
+		configuracion.desconectar(ID);
 	}
 }
