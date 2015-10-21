@@ -8,6 +8,18 @@ public class GestorDeTrackerBitTorrent {
 	public GestorDeTrackerBitTorrent() {
 		
 	}
+	
+	public void iniciar() {
+		
+	}
+	
+	public void parar() {
+		
+	}
+	
+	public void desconectar() {
+		
+	}
 
 	public int getID() {
 		return ID;

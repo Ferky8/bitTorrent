@@ -11,7 +11,7 @@ public class GestorDeRedundanciaDeTrackers {
 		
 	}
 
-	public void añadirObserver(Observer o) {
+	public void anadirObserver(Observer o) {
 		if (o != null && !this.observers.contains(o)) {
 			this.observers.add(o);
 		}

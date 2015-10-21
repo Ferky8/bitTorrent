@@ -8,24 +8,15 @@ public class ControladorDetallesTracker {
 
 	private GestorDeRedundanciaDeTrackers gestorDeRedudancia;
 	
-	public GestorDeRedundanciaDeTrackers getGestorDeRedudancia() {
-		return gestorDeRedudancia;
-	}
-
-	public void setGestorDeRedudancia(
-			GestorDeRedundanciaDeTrackers gestorDeRedudancia) {
-		this.gestorDeRedudancia = gestorDeRedudancia;
-	}
-
-	public void añadirObserver(Observer o) {
-		
+	public void anadirObserver(Observer o) {
+		gestorDeRedudancia.anadirObserver(o);
 	}
 	
 	public void eliminarObserver(Observer o) {
-		
+		gestorDeRedudancia.eliminarObserver(o);
 	}
 	
 	public void desconectar() {
-		
+		gestorDeRedudancia.desconectar();
 	}
 }
