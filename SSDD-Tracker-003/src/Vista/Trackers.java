@@ -62,6 +62,7 @@ public class Trackers extends JPanel implements Observer {
 		dtm.addColumn("Último KA");
 		
 		
+		
 		for(int i = 0;i<8;i++){
 			Object[] fila = new Object[3];
 			fila[0]= (int)Math.ceil(Math.random() * 100);
