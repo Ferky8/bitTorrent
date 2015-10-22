@@ -81,6 +81,10 @@ public class GestorDeRedundanciaDeTrackers {
 		
 	}
 	
+	public void nuevaInstancia() {
+		
+	}
+	
 	public static void main(String args[]) {
 		
 	}
