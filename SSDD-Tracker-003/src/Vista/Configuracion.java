@@ -28,7 +28,7 @@ public class Configuracion extends JPanel {
 	private Pattern pattern;
 	private Pattern pattern_2;
 	
-	private static final String IPADDRESS_PATTERNHola = 
+	private static final String IPADDRESS_PATTERN = 
 			"^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
 			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
 			"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
@@ -36,15 +36,16 @@ public class Configuracion extends JPanel {
 	
 	private static final String PORT_PATTERN = 
 			"^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$";
+	private JTextField textField_3;
 	
 	public Configuracion() {
-		pattern = Pattern.compile(IPADDRESS_PATTERNHola);
+		pattern = Pattern.compile(IPADDRESS_PATTERN);
 		pattern_2 = Pattern.compile(PORT_PATTERN);
 	    
 		GridBagLayout gbl_c = new GridBagLayout();
-		gbl_c.columnWidths = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_c.columnWidths = new int[]{0, 0, 0, 0, 0, 30, 0, 0, 0, 30, 0, 0};
 		gbl_c.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0};
-		gbl_c.columnWeights = new double[]{1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_c.columnWeights = new double[]{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, Double.MIN_VALUE};
 		gbl_c.rowWeights = new double[]{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		setLayout(gbl_c);
 		
@@ -58,8 +59,9 @@ public class Configuracion extends JPanel {
 		
 		textField = new JTextField();
 		GridBagConstraints gbc_textField = new GridBagConstraints();
-		gbc_textField.insets = new Insets(0, 0, 5, 5);
 		gbc_textField.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField.gridwidth = 5;
+		gbc_textField.insets = new Insets(0, 0, 5, 5);
 		gbc_textField.gridx = 5;
 		gbc_textField.gridy = 1;
 		add(textField, gbc_textField);
@@ -69,16 +71,20 @@ public class Configuracion extends JPanel {
 		btnIniciarparar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				//Si estan mal la IP y el puerto
-				if (!(pattern.matcher(textField.getText()).matches()) && !(pattern_2.matcher(textField_1.getText()).matches())) {
+				if (!(pattern.matcher(textField.getText()).matches()) && !(pattern_2.matcher(textField_1.getText()).matches())
+						&& !(pattern_2.matcher(textField_3.getText()).matches())) {
 					JOptionPane.showMessageDialog(null, "IP y puerto invalidos", "ERROR", JOptionPane.ERROR_MESSAGE);
 				//Si esta mal solo la IP
 				} else if (!(pattern.matcher(textField.getText()).matches())){
 					JOptionPane.showMessageDialog(null, "IP invalida", "ERROR", JOptionPane.ERROR_MESSAGE);
-				//Si esta mal solo el puerto
-				}else if (!(pattern_2.matcher(textField_1.getText()).matches())){
-					JOptionPane.showMessageDialog(null, "Puerto invalido", "ERROR", JOptionPane.ERROR_MESSAGE);
+				//Si esta mal solo el puerto t-t
+				} else if (!(pattern_2.matcher(textField_1.getText()).matches())){
+					JOptionPane.showMessageDialog(null, "Puerto T-T invalido", "ERROR", JOptionPane.ERROR_MESSAGE);
+					//Si esta mal solo el puerto t-p
+				} else if (!(pattern_2.matcher(textField_3.getText()).matches())){
+					JOptionPane.showMessageDialog(null, "Puerto T-P invalido", "ERROR", JOptionPane.ERROR_MESSAGE);
 				//Si esta todo bien
-				} else{
+				} else {
 					
 				}
 			}
@@ -89,17 +95,17 @@ public class Configuracion extends JPanel {
 		gbc_btnIniciarparar.gridy = 2;
 		add(btnIniciarparar, gbc_btnIniciarparar);
 		
-		JLabel lblPuerto = new JLabel("Puerto");
-		GridBagConstraints gbc_lblPuerto = new GridBagConstraints();
-		gbc_lblPuerto.insets = new Insets(0, 0, 5, 5);
-		gbc_lblPuerto.gridx = 3;
-		gbc_lblPuerto.gridy = 3;
-		add(lblPuerto, gbc_lblPuerto);
+		JLabel lblPuertoTt = new JLabel("Puerto T-T");
+		GridBagConstraints gbc_lblPuertoTt = new GridBagConstraints();
+		gbc_lblPuertoTt.insets = new Insets(0, 0, 5, 5);
+		gbc_lblPuertoTt.gridx = 3;
+		gbc_lblPuertoTt.gridy = 3;
+		add(lblPuertoTt, gbc_lblPuertoTt);
 		
 		textField_1 = new JTextField();
 		GridBagConstraints gbc_textField_1 = new GridBagConstraints();
-		gbc_textField_1.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_1.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField_1.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_1.gridx = 5;
 		gbc_textField_1.gridy = 3;
 		add(textField_1, gbc_textField_1);
@@ -111,6 +117,23 @@ public class Configuracion extends JPanel {
 				JOptionPane.showConfirmDialog(null, "¿Seguro que deseas desconectar?", "ATENCIÓN", JOptionPane.YES_NO_OPTION);
 			}
 		});
+		
+		JLabel lblPuertoTp = new JLabel("Puerto T-P");
+		GridBagConstraints gbc_lblPuertoTp = new GridBagConstraints();
+		gbc_lblPuertoTp.fill = GridBagConstraints.HORIZONTAL;
+		gbc_lblPuertoTp.insets = new Insets(0, 0, 5, 5);
+		gbc_lblPuertoTp.gridx = 7;
+		gbc_lblPuertoTp.gridy = 3;
+		add(lblPuertoTp, gbc_lblPuertoTp);
+		
+		textField_3 = new JTextField();
+		GridBagConstraints gbc_textField_3 = new GridBagConstraints();
+		gbc_textField_3.insets = new Insets(0, 0, 5, 5);
+		gbc_textField_3.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField_3.gridx = 9;
+		gbc_textField_3.gridy = 3;
+		add(textField_3, gbc_textField_3);
+		textField_3.setColumns(10);
 		GridBagConstraints gbc_btnDesconectar = new GridBagConstraints();
 		gbc_btnDesconectar.insets = new Insets(0, 0, 5, 5);
 		gbc_btnDesconectar.gridx = 1;
@@ -126,8 +149,9 @@ public class Configuracion extends JPanel {
 		
 		textField_2 = new JTextField();
 		GridBagConstraints gbc_textField_2 = new GridBagConstraints();
-		gbc_textField_2.insets = new Insets(0, 0, 5, 5);
+		gbc_textField_2.gridwidth = 5;
 		gbc_textField_2.fill = GridBagConstraints.HORIZONTAL;
+		gbc_textField_2.insets = new Insets(0, 0, 5, 5);
 		gbc_textField_2.gridx = 5;
 		gbc_textField_2.gridy = 5;
 		add(textField_2, gbc_textField_2);
