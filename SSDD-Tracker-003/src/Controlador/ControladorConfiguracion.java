@@ -1,19 +1,19 @@
 package Controlador;
 
-import Modelo.GestorDeTrackerBitTorrent;
+import Modelo.GestorDeRedundanciaDeTrackers;
 
 public class ControladorConfiguracion {
-	private GestorDeTrackerBitTorrent gestorDeTracker;
+	private GestorDeRedundanciaDeTrackers gestorDeRedudancia;
 	
 	public void iniciar(String IP, int puerto, int ID) {
-		gestorDeTracker.iniciar(IP, puerto, ID);
+		gestorDeRedudancia.iniciar(IP, puerto, ID);
 	}
 	
 	public void parar(int ID) {
-		gestorDeTracker.parar(ID);
+		gestorDeRedudancia.parar(ID);
 	}
 	
 	public void desconectar(int ID) {
-		gestorDeTracker.desconectar(ID);
+		gestorDeRedudancia.desconectar(ID);
 	}
 }

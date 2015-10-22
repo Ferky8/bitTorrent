@@ -6,6 +6,9 @@ import java.util.Observer;
 public class GestorDeRedundanciaDeTrackers {
 	
 	private List<Observer> observers;
+	private int ID;
+	private String IP;
+	private int puerto;
 		
 	public GestorDeRedundanciaDeTrackers() {
 		
@@ -31,6 +34,51 @@ public class GestorDeRedundanciaDeTrackers {
 	
 	public void desconectar() {
 		this.alertarObservers(null);
+	}
+	
+
+	public void iniciar(String IP, int puerto, int ID) {
+		
+	}
+	
+	public void parar(int ID) {
+		
+	}
+	
+	public void desconectar(int ID) {
+		
+	}
+
+	public int getID() {
+		return ID;
+	}
+
+	public void setID(int iD) {
+		ID = iD;
+	}
+
+	public String getIP() {
+		return IP;
+	}
+
+	public void setIP(String iP) {
+		IP = iP;
+	}
+
+	public int getPuerto() {
+		return puerto;
+	}
+
+	public void setPuerto(int puerto) {
+		this.puerto = puerto;
+	}
+	
+	public void keepAlive() {
+		
+	}
+	
+	public void seleccionarMaster() {
+		
 	}
 	
 	public static void main(String args[]) {

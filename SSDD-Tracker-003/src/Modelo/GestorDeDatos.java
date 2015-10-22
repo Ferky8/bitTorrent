@@ -42,4 +42,16 @@ public class GestorDeDatos {
 	public void setConexion(Connection conexion) {
 		
 	}
+	
+	public void hayGuardar() {
+		
+	}
+	
+	public void preparadoGuardar() {
+		
+	}
+	
+	public void OKGuardar() {
+		
+	}
 }
