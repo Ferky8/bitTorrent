@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.text.DecimalFormat;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -59,6 +60,18 @@ public class Trackers extends JPanel implements Observer {
 		dtm.addColumn("Id");
 		dtm.addColumn("Master");
 		dtm.addColumn("Último KA");
+		
+		
+		for(int i = 0;i<8;i++){
+			Object[] fila = new Object[3];
+			fila[0]= (int)Math.ceil(Math.random() * 100);
+			fila[1]= "1";
+			DecimalFormat numberFormat = new DecimalFormat("0.00");
+			fila[2]= numberFormat.format(Math.random() * 2)+" seg";
+			
+			dtm.addRow(fila);
+		}
+				
 		table.setModel(dtm);
 	}
 
