@@ -1,17 +1,36 @@
 package Modelo;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
+import java.net.SocketException;
 import java.util.List;
 import java.util.Observer;
 
-public class GestorDeRedundanciaDeTrackers {
+public class GestorDeRedundanciaDeTrackers implements Runnable {
 	
 	private List<Observer> observers;
 	private int ID;
 	private String IP;
 	private int puerto;
+	private MulticastSocket socket;
+	private InetAddress group;
 		
-	public GestorDeRedundanciaDeTrackers() {
+	public GestorDeRedundanciaDeTrackers(String IP, int puerto, int ID) {
+		this.IP = IP;
+		this.puerto = puerto;
+		this.ID = ID;
 		
+		try {
+			this.socket = new MulticastSocket(puerto);
+			this.group = InetAddress.getByName(IP);
+			socket.joinGroup(group);
+		} catch (SocketException e) {
+			System.err.println("# Socket Error: " + e.getMessage());
+		} catch (IOException e) {
+			System.err.println("# IO Error: " + e.getMessage());
+		}
 	}
 
 	public void anadirObserver(Observer o) {
@@ -38,6 +57,9 @@ public class GestorDeRedundanciaDeTrackers {
 	
 
 	public void iniciar(String IP, int puerto, int ID) {
+		this.ID = ID;
+		this.IP = IP;
+		this.puerto = puerto;
 		
 	}
 	
@@ -87,5 +109,37 @@ public class GestorDeRedundanciaDeTrackers {
 	
 	public static void main(String args[]) {
 		
+	}
+
+	@Override
+	public void run() {
+		String message = "Hola nigga";
+		
+		try {
+			DatagramPacket messageOut = new DatagramPacket(message.getBytes(), message.length(), group, puerto);
+			socket.send(messageOut);
+			
+			System.out.println(" - Sent a message to '" + messageOut.getAddress().getHostAddress() + ":" + messageOut.getPort() + 
+			                   "' -> " + new String(messageOut.getData()) + " [" + messageOut.getLength() + " byte(s)]");
+			
+			byte[] buffer = new byte[1024];			
+			DatagramPacket messageIn = null;
+			
+			for (int i = 0; i < 3; i++) { // get messages from other 2 peers in the same group
+				System.out.println(" - After " + (3-i) + " messages I'll stop!");
+	
+				messageIn = new DatagramPacket(buffer, buffer.length);
+				socket.receive(messageIn);
+	
+				System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + 
+		                   		   "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
+			}
+			
+			System.out.println(" - I have received 3 messages, so I stopped!");
+			
+			socket.leaveGroup(group);
+		} catch(Exception e) {
+			
+		}
 	}
 }

@@ -85,7 +85,7 @@ public class Configuracion extends JPanel {
 					JOptionPane.showMessageDialog(null, "Puerto T-P invalido", "ERROR", JOptionPane.ERROR_MESSAGE);
 				//Si esta todo bien
 				} else {
-					
+					iniciar(textField.getText(), Integer.parseInt(textField_1.getText()), Integer.parseInt(textField_2.getText()));
 				}
 			}
 		});
@@ -159,6 +159,7 @@ public class Configuracion extends JPanel {
 	}
 	
 	public void iniciar(String IP, int puerto, int ID) {
+		configuracion = new ControladorConfiguracion();
 		configuracion.iniciar(IP, puerto, ID);
 	}
 	

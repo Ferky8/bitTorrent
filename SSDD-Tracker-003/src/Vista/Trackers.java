@@ -81,8 +81,6 @@ public class Trackers extends JPanel implements Observer {
 		}
 				
 		table.setModel(dtm);
-		
-		detallesTracker.anadirObserver(this);
 	}
 	
 	@Override

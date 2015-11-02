@@ -6,7 +6,8 @@ public class ControladorConfiguracion {
 	private GestorDeRedundanciaDeTrackers gestorDeRedudancia;
 	
 	public void iniciar(String IP, int puerto, int ID) {
-		gestorDeRedudancia.iniciar(IP, puerto, ID);
+		gestorDeRedudancia = new GestorDeRedundanciaDeTrackers(IP, puerto, ID);
+		//gestorDeRedudancia.iniciar(IP, puerto, ID);
 	}
 	
 	public void parar(int ID) {
