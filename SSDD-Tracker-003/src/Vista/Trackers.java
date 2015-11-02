@@ -6,6 +6,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
+import Controlador.ControladorDetallesTracker;
+
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -16,11 +18,16 @@ import java.util.Observer;
 public class Trackers extends JPanel implements Observer {
 
 	private static final long serialVersionUID = 1L;
+	
+	private ControladorDetallesTracker detallesTracker;
 		
 	private JTable table;
 	private DefaultTableModel dtm;
 	
-	public Trackers() {
+	public Trackers(ControladorDetallesTracker detallesTracker) {
+		
+		this.detallesTracker = detallesTracker;
+		
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 450, 0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 14, 0, 220, 34, 0};
@@ -74,8 +81,10 @@ public class Trackers extends JPanel implements Observer {
 		}
 				
 		table.setModel(dtm);
+		
+		detallesTracker.anadirObserver(this);
 	}
-
+	
 	@Override
 	public void update(Observable o, Object arg) {
 		// TODO Auto-generated method stub

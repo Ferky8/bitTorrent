@@ -45,7 +45,7 @@ public class TrackerMain extends JFrame {
 		
 		tabbedPane.addTab("Configuración", null, new Configuracion(), null);
 				
-		tabbedPane.addTab("Trackers", null, new Trackers(), null);
+		tabbedPane.addTab("Trackers", null, new Trackers(null), null);
 		
 		tabbedPane.addTab("Peers", null, new Peers(), null);
 		
