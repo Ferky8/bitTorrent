@@ -16,6 +16,8 @@ public class GestorDeRedundanciaDeTrackers implements Runnable {
 	private int puerto;
 	private MulticastSocket socket;
 	private InetAddress group;
+	
+	private Thread hilo;
 		
 	public GestorDeRedundanciaDeTrackers(String IP, int puerto, int ID) {
 		this.IP = IP;
@@ -31,6 +33,9 @@ public class GestorDeRedundanciaDeTrackers implements Runnable {
 		} catch (IOException e) {
 			System.err.println("# IO Error: " + e.getMessage());
 		}
+		
+		hilo=new Thread(this,"hilo 1");
+		hilo.start();
 	}
 
 	public void anadirObserver(Observer o) {
