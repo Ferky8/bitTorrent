@@ -5,37 +5,28 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class GestorDeRedundanciaDeTrackers implements Runnable {
+public class GestorDeRedundanciaDeTrackers extends Observable implements Runnable {
 	
+	private static GestorDeRedundanciaDeTrackers gestor = null;
 	private List<Observer> observers;
 	private int ID;
 	private String IP;
 	private int puerto;
 	private MulticastSocket socket;
 	private InetAddress group;
+	private int estado = 0;
+	private ConcurrentHashMap<Integer, GestorDeRedundanciaDeTrackers> trackers = new ConcurrentHashMap<Integer, GestorDeRedundanciaDeTrackers>();
 	
 	private Thread hilo;
 		
-	public GestorDeRedundanciaDeTrackers(String IP, int puerto, int ID) {
-		this.IP = IP;
-		this.puerto = puerto;
-		this.ID = ID;
-		
-		try {
-			this.socket = new MulticastSocket(puerto);
-			this.group = InetAddress.getByName(IP);
-			socket.joinGroup(group);
-		} catch (SocketException e) {
-			System.err.println("# Socket Error: " + e.getMessage());
-		} catch (IOException e) {
-			System.err.println("# IO Error: " + e.getMessage());
-		}
-		
-		hilo=new Thread(this,"hilo 1");
-		hilo.start();
+	private GestorDeRedundanciaDeTrackers() {
+		observers = new ArrayList<Observer>();
 	}
 
 	public void anadirObserver(Observer o) {
@@ -57,22 +48,36 @@ public class GestorDeRedundanciaDeTrackers implements Runnable {
 	}
 	
 	public void desconectar() {
-		this.alertarObservers(null);
+		try {
+			socket.leaveGroup(group);
+			this.alertarObservers(null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}		
 	}
 	
 
 	public void iniciar(String IP, int puerto, int ID) {
-		this.ID = ID;
 		this.IP = IP;
 		this.puerto = puerto;
+		this.ID = ID;
+		this.observers = new ArrayList<Observer>();
 		
+		try {
+			this.socket = new MulticastSocket(puerto);
+			this.group = InetAddress.getByName(IP);
+			socket.joinGroup(group);
+		} catch (SocketException e) {
+			System.err.println("# Socket Error: " + e.getMessage());
+		} catch (IOException e) {
+			System.err.println("# IO Error: " + e.getMessage());
+		}
+		
+		hilo=new Thread(this,"hilo 1");
+		hilo.start();		
 	}
 	
 	public void parar(int ID) {
-		
-	}
-	
-	public void desconectar(int ID) {
 		
 	}
 
@@ -100,25 +105,16 @@ public class GestorDeRedundanciaDeTrackers implements Runnable {
 		this.puerto = puerto;
 	}
 	
-	public void keepAlive() {
+	private void keepAlive() {
 		
 	}
 	
-	public void seleccionarMaster() {
+	private void seleccionarMaster() {
 		
 	}
 	
-	public void nuevaInstancia() {
-		
-	}
-	
-	public static void main(String args[]) {
-		
-	}
-
-	@Override
-	public void run() {
-		String message = "Hola nigga";
+	private void nuevaInstancia() {
+		String message = "400 Hola";
 		
 		try {
 			DatagramPacket messageOut = new DatagramPacket(message.getBytes(), message.length(), group, puerto);
@@ -140,11 +136,26 @@ public class GestorDeRedundanciaDeTrackers implements Runnable {
 		                   		   "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
 			}
 			
-			System.out.println(" - I have received 3 messages, so I stopped!");
-			
-			socket.leaveGroup(group);
 		} catch(Exception e) {
 			
+		}
+	}
+	
+	public static void main(String args[]) {
+		
+	}
+	
+	public static GestorDeRedundanciaDeTrackers getInstance() {
+		if(gestor == null)
+			return new GestorDeRedundanciaDeTrackers();
+		else
+			return gestor;
+	}
+
+	@Override
+	public void run() {
+		switch(estado) {
+			case 0: nuevaInstancia();
 		}
 	}
 }

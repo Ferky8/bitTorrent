@@ -21,7 +21,7 @@ public class Configuracion extends JPanel {
 	private static final long serialVersionUID = 1L;
 	
 	private ControladorConfiguracion configuracion;
-	
+	private Trackers trackerDetailPanel;
 	private JTextField textField;
 	private JTextField textField_1;
 	private JTextField textField_2;
@@ -38,7 +38,9 @@ public class Configuracion extends JPanel {
 			"^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$";
 	private JTextField textField_3;
 	
-	public Configuracion() {
+	public Configuracion(Trackers trackerDetailPanel) {
+		this.trackerDetailPanel = trackerDetailPanel;
+		
 		pattern = Pattern.compile(IPADDRESS_PATTERN);
 		pattern_2 = Pattern.compile(PORT_PATTERN);
 	    
@@ -114,7 +116,10 @@ public class Configuracion extends JPanel {
 		JButton btnDesconectar = new JButton("Desconectar");
 		btnDesconectar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				JOptionPane.showConfirmDialog(null, "¿Seguro que deseas desconectar?", "ATENCIÓN", JOptionPane.YES_NO_OPTION);
+				int opcion = JOptionPane.showConfirmDialog(null, "¿Seguro que deseas desconectar?", "ATENCIÓN", JOptionPane.YES_NO_OPTION);
+				if(opcion == 0) {
+					desconectar();
+				}
 			}
 		});
 		
@@ -156,18 +161,25 @@ public class Configuracion extends JPanel {
 		gbc_textField_2.gridy = 5;
 		add(textField_2, gbc_textField_2);
 		textField_2.setColumns(20);
+		
+		textField.setText("228.4.4.4");
+		textField_1.setText("9000");
+		textField_2.setText("1");
+		textField_3.setText("1234");
+		
 	}
 	
 	public void iniciar(String IP, int puerto, int ID) {
 		configuracion = new ControladorConfiguracion();
 		configuracion.iniciar(IP, puerto, ID);
+		configuracion.anadirObserver(trackerDetailPanel);
 	}
 	
 	public void parar(int ID) {
 		configuracion.parar(ID);
 	}
 	
-	public void desconectar(int ID) {
-		configuracion.desconectar(ID);
+	public void desconectar() {
+		configuracion.desconectar();
 	}
 }

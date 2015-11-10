@@ -1,20 +1,26 @@
 package Controlador;
 
+import java.util.Observer;
+
 import Modelo.GestorDeRedundanciaDeTrackers;
+import Vista.Trackers;
 
 public class ControladorConfiguracion {
-	private GestorDeRedundanciaDeTrackers gestorDeRedudancia;
 	
 	public void iniciar(String IP, int puerto, int ID) {
-		gestorDeRedudancia = new GestorDeRedundanciaDeTrackers(IP, puerto, ID);
+		GestorDeRedundanciaDeTrackers.getInstance().iniciar(IP, puerto, ID);
 		//gestorDeRedudancia.iniciar(IP, puerto, ID);
 	}
 	
 	public void parar(int ID) {
-		gestorDeRedudancia.parar(ID);
+		GestorDeRedundanciaDeTrackers.getInstance().parar(ID);
 	}
 	
-	public void desconectar(int ID) {
-		gestorDeRedudancia.desconectar(ID);
+	public void desconectar() {
+		GestorDeRedundanciaDeTrackers.getInstance().desconectar();
+	}
+	
+	public void anadirObserver(Observer o) {
+		GestorDeRedundanciaDeTrackers.getInstance().anadirObserver(o);
 	}
 }
