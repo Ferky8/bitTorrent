@@ -96,29 +96,31 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		@Override
 		public void run() {
 			try {
-				messageIn = new DatagramPacket(buffer, buffer.length);
-				socket.receive(messageIn);
-				String mensaje = new String(messageIn.getData());
-				System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + 
-                		   "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
-				
-				if(mensaje.contains("$")) {
-					int posicion = mensaje.indexOf('$');
-					mensaje = mensaje.substring(0, posicion);
-					System.out.println(mensaje);
-					trackers.put(Integer.parseInt(mensaje), Integer.parseInt(mensaje));
-				} else if(mensaje.contains("Hola") && GestorDeRedundanciaDeTrackers.esMaster) {
-					enviar("5#");
+				while(true){
+					messageIn = new DatagramPacket(buffer, buffer.length);
+					socket.receive(messageIn);
+					String mensaje = new String(messageIn.getData());
+					System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + 
+	                		   "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
 					
-				//falta tener en cuenta en el if de abajo que el gestor no tiene ID
-				} else if(mensaje.contains("#")) {
-					int posicion = mensaje.indexOf('#');
-					System.out.println(posicion);
-					mensaje = mensaje.substring(0, posicion);
-					System.out.println(mensaje);
-					trackers.put(Integer.parseInt(mensaje), Integer.parseInt(mensaje));
-					GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(mensaje);
-					estado = 1;
+					if(mensaje.contains("$")) {
+						int posicion = mensaje.indexOf('$');
+						mensaje = mensaje.substring(0, posicion);
+						System.out.println(mensaje);
+						trackers.put(Integer.parseInt(mensaje), Integer.parseInt(mensaje));
+					} else if(mensaje.contains("Hola") && GestorDeRedundanciaDeTrackers.esMaster) {
+						enviar("5#");
+						
+					//falta tener en cuenta en el if de abajo que el gestor no tiene ID
+					} else if(mensaje.contains("#") && GestorDeRedundanciaDeTrackers.ID == 0) {
+						int posicion = mensaje.indexOf('#');
+						System.out.println(posicion);
+						mensaje = mensaje.substring(0, posicion);
+						System.out.println(mensaje);
+						trackers.put(Integer.parseInt(mensaje), Integer.parseInt(mensaje));
+						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(mensaje);
+						estado = 1;
+					}
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
