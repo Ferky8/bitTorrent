@@ -90,14 +90,14 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 	
 	class Lector implements Runnable {
-		byte[] buffer = new byte[1024];			
-		DatagramPacket messageIn = null;
-		
 		@Override
 		public void run() {
 			try {
 				while(true){
+					byte[] buffer = new byte[1024];			
+					DatagramPacket messageIn = null;
 					messageIn = new DatagramPacket(buffer, buffer.length);
+					//System.out.println("Esperando a leer");
 					socket.receive(messageIn);
 					String mensaje = new String(messageIn.getData());
 					System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + 
@@ -106,9 +106,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 					if(mensaje.contains("$")) {
 						int posicion = mensaje.indexOf('$');
 						mensaje = mensaje.substring(0, posicion);
-						System.out.println(mensaje);
+						//System.out.println(mensaje);
 						trackers.put(Integer.parseInt(mensaje), Integer.parseInt(mensaje));
 					} else if(mensaje.contains("Hola") && GestorDeRedundanciaDeTrackers.esMaster) {
+						System.out.println("en el hola");
 						enviar("5#");
 						
 					//falta tener en cuenta en el if de abajo que el gestor no tiene ID
