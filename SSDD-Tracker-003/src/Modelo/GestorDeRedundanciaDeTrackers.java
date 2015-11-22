@@ -6,7 +6,9 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Timer;
@@ -26,6 +28,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private static InetAddress group;
 	private int estado = 0;
 	private static ConcurrentHashMap<Integer, Integer> trackers;
+	private static Timer timerKA;
 	
 	private Thread hilo;
 	private Thread hiloLector;
@@ -54,6 +57,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	
 	public void desconectar() {
 		try {
+			GestorDeRedundanciaDeTrackers.timerKA.cancel();
+			GestorDeRedundanciaDeTrackers.trackers.remove(GestorDeRedundanciaDeTrackers.ID, GestorDeRedundanciaDeTrackers.ID);
 			GestorDeRedundanciaDeTrackers.socket.leaveGroup(group);
 			this.alertarObservers(null);
 		} catch (IOException e) {
@@ -97,27 +102,27 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 					byte[] buffer = new byte[1024];			
 					DatagramPacket messageIn = null;
 					messageIn = new DatagramPacket(buffer, buffer.length);
-					//System.out.println("Esperando a leer");
 					socket.receive(messageIn);
 					String mensaje = new String(messageIn.getData());
-					System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + 
-	                		   "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
+					System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
 					
-					if(mensaje.contains("$")) {
-						int posicion = mensaje.indexOf('$');
-						mensaje = mensaje.substring(0, posicion);
-						//System.out.println(mensaje);
+					if(mensaje.contains("201KA")) {
+						int posInicio = mensaje.indexOf('-');
+						int posFin = mensaje.indexOf('$');
+						mensaje = mensaje.substring(posInicio+1, posFin);
 						trackers.put(Integer.parseInt(mensaje), Integer.parseInt(mensaje));
-					} else if(mensaje.contains("Hola") && GestorDeRedundanciaDeTrackers.esMaster) {
-						System.out.println("en el hola");
-						enviar("5#");
+						
+					} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
+						System.out.println("Recibida peticion de nueva instancia...");
+						int minID = getMinID();
+						enviar("202AI-"+minID+"#");
 						
 					//falta tener en cuenta en el if de abajo que el gestor no tiene ID
-					} else if(mensaje.contains("#") && GestorDeRedundanciaDeTrackers.ID == 0) {
-						int posicion = mensaje.indexOf('#');
-						System.out.println(posicion);
-						mensaje = mensaje.substring(0, posicion);
-						System.out.println(mensaje);
+					} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
+						int posInicio = mensaje.indexOf('-');
+						int posFin = mensaje.indexOf('#');
+						mensaje = mensaje.substring(posInicio+1, posFin);
+						//System.out.println(mensaje);
 						trackers.put(Integer.parseInt(mensaje), Integer.parseInt(mensaje));
 						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(mensaje);
 						estado = 1;
@@ -156,12 +161,13 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 	
 	private void keepAlive() {
-		Timer timer = new Timer();
-        timer.schedule( new TimerTask() {
+		timerKA = new Timer();
+		timerKA.schedule( new TimerTask() {
 
             @Override
             public void run() {
-            	String mensaje = Integer.toString(GestorDeRedundanciaDeTrackers.ID)+'$';
+            	//String mensaje = Integer.toString(GestorDeRedundanciaDeTrackers.ID)+'$';
+            	String mensaje = "201KA-"+Integer.toString(GestorDeRedundanciaDeTrackers.ID)+"$";
             	try {
             		enviar(mensaje);
             	} catch(Exception e) {
@@ -171,6 +177,22 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
         }, 0, 100);
 	}
 	
+	private int getMinID(){
+		
+		Boolean encontrado = false;
+		int min = 1;
+		do{
+			if(!trackers.containsKey(min))
+			{
+				encontrado = true;
+			}else
+			{
+				min++;
+			}
+		}while(!encontrado);
+		
+		return min;
+	}
 	
 	private void seleccionarMaster() {
 		
@@ -189,7 +211,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			estado = 1;
 		} else {
 			GestorDeRedundanciaDeTrackers.ID = 0;
-			String mensaje = "Hola";
+			String mensaje = "200NI";
 			
 			try {
 				enviar(mensaje);
