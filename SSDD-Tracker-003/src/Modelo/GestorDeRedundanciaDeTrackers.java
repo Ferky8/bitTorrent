@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Observable;
@@ -13,6 +14,7 @@ import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import Entidad.Tracker;
 
@@ -105,27 +107,19 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 					messageIn = new DatagramPacket(buffer, buffer.length);
 					socket.receive(messageIn);
 					String mensaje = new String(messageIn.getData());
-					//System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
+					System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
 					
 					if(mensaje.contains("201KA")) {
 						int posInicio = mensaje.indexOf('-');
 						int posFin = mensaje.indexOf('$');
 						mensaje = mensaje.substring(posInicio+1, posFin);
-						//Si llega KA con estrellita el nuevo tracker k se introduce en el Map esMaster = true
-						if(!trackers.containsKey(Integer.parseInt(mensaje))) {
-							trackers.put(Integer.parseInt(mensaje), new Tracker(Integer.parseInt(mensaje), false, new Date()));
-						} else {
-							Tracker t = trackers.get(Integer.parseInt(mensaje));
-							t.setUltimoKA(new Date());
-							trackers.put(Integer.parseInt(mensaje), t);
-						}
+						actualizarTrackers(mensaje);
 						
 					} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
 						System.out.println("Recibida peticion de nueva instancia...");
 						int minID = getMinID();
 						enviar("202AI-"+minID+"#");
 						
-					//falta tener en cuenta en el if de abajo que el gestor no tiene ID
 					} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
 						int posInicio = mensaje.indexOf('-');
 						int posFin = mensaje.indexOf('#');
@@ -173,8 +167,13 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 
             @Override
             public void run() {
-            	//String mensaje = Integer.toString(GestorDeRedundanciaDeTrackers.ID)+'$';
-            	String mensaje = "201KA-"+Integer.toString(GestorDeRedundanciaDeTrackers.ID)+"$";
+            	
+            	String mensaje = "";
+            	if(esMaster) {
+            		mensaje = "201KA-*"+Integer.toString(GestorDeRedundanciaDeTrackers.ID)+"$";
+            	} else {
+            		mensaje = "201KA-"+Integer.toString(GestorDeRedundanciaDeTrackers.ID)+"$";
+            	}
             	try {
             		enviar(mensaje);
             	} catch(Exception e) {
@@ -190,9 +189,55 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 
             @Override
             public void run() {
-            	
+            	//System.out.println("IDs de los trackers de hashmap: ");
+            	for (int key : trackers.keySet()) {
+            		
+            		Tracker tracker = trackers.get(key);
+            		
+            		Date ahora = new Date();
+            		long resta = ahora.getTime() - tracker.getUltimoKA().getTime();
+            		
+            		Date fechaResta = new Date(resta);
+            		Calendar calendar = Calendar.getInstance();
+            		calendar.setTime(fechaResta);
+            		int seconds = calendar.get(Calendar.SECOND);
+            		int miliseconds = calendar.get(Calendar.MILLISECOND);
+            		
+                    //System.out.println("ID: " + key + " UKA: " + seconds + ":" + miliseconds);
+            		
+            		if(seconds > 3) {
+            			if(tracker.esMaster()) {
+            				//Enviar mensaje avisando que ha caido el master
+            			}
+            			trackers.remove(key);
+            		}
+                }
             }
         }, 0, 2000);
+	}
+	
+	private void actualizarTrackers(String mensaje) {
+		
+		if(mensaje.contains("*")) {
+			mensaje = mensaje.substring(1);
+			
+			if(!trackers.containsKey(Integer.parseInt(mensaje))) {
+				trackers.put(Integer.parseInt(mensaje), new Tracker(Integer.parseInt(mensaje), true, new Date()));
+			} else {
+				Tracker t = trackers.get(Integer.parseInt(mensaje));
+				t.setUltimoKA(new Date());
+				trackers.put(Integer.parseInt(mensaje), t);
+			}
+		}else {
+			if(!trackers.containsKey(Integer.parseInt(mensaje))) {
+				trackers.put(Integer.parseInt(mensaje), new Tracker(Integer.parseInt(mensaje), false, new Date()));
+			} else {
+				Tracker t = trackers.get(Integer.parseInt(mensaje));
+				t.setUltimoKA(new Date());
+				trackers.put(Integer.parseInt(mensaje), t);
+			}
+			
+		}	
 	}
 	
 	private int getMinID() {
