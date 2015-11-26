@@ -14,7 +14,6 @@ import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import Entidad.Tracker;
 
@@ -23,15 +22,15 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private static GestorDeRedundanciaDeTrackers gestor = null;
 	private List<Observer> observers;
 	private static int ID;
-	private static String IP;
-	private static int puerto;
+	private String IP;
+	private int puerto;
 	private static boolean esMaster = false;
 	private static MulticastSocket socket;
 	private static InetAddress group;
 	private int estado = 0;
 	private static ConcurrentHashMap<Integer, Tracker> trackers;
 	private static Timer timerKA;
-	private static Timer timerCT;
+	private Timer timerCT;
 	
 	private Thread hilo;
 	private Thread hiloLector;
@@ -62,7 +61,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		try {
 			GestorDeRedundanciaDeTrackers.timerKA.cancel();
 			GestorDeRedundanciaDeTrackers.trackers.remove(GestorDeRedundanciaDeTrackers.ID);
-			GestorDeRedundanciaDeTrackers.socket.leaveGroup(group);
+			GestorDeRedundanciaDeTrackers.socket.leaveGroup(GestorDeRedundanciaDeTrackers.group);
 			this.alertarObservers(null);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -73,13 +72,13 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	public void iniciar(String IP, int puerto, int ID) {
 		this.IP = IP;
 		this.puerto = puerto;
-		this.ID = ID;
+		GestorDeRedundanciaDeTrackers.ID = ID;
 		this.observers = new ArrayList<Observer>();
 		
 		try {
-			this.socket = new MulticastSocket(puerto);
-			this.group = InetAddress.getByName(IP);
-			this.socket.joinGroup(group);
+			GestorDeRedundanciaDeTrackers.socket = new MulticastSocket(puerto);
+			GestorDeRedundanciaDeTrackers.group = InetAddress.getByName(IP);
+			GestorDeRedundanciaDeTrackers.socket.joinGroup(group);
 		} catch (SocketException e) {
 			System.err.println("# Socket Error: " + e.getMessage());
 		} catch (IOException e) {
@@ -127,6 +126,11 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						//System.out.println(mensaje);
 						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(mensaje);
 						estado = 1;
+					} else if(mensaje.contains("400MC")) {
+						int posInicio = mensaje.indexOf('-');
+						int posFin = mensaje.indexOf('$');
+						mensaje = mensaje.substring(posInicio+1, posFin);
+						seleccionarMaster(mensaje);
 					}
 				}
 			} catch (IOException e) {
@@ -207,9 +211,15 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
             		
             		if(seconds > 3) {
             			if(tracker.esMaster()) {
-            				//Enviar mensaje avisando que ha caido el master
+            				String mensaje = "400MC-"+tracker.getId()+"$";
+            				try {
+								enviar(mensaje);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+            			} else {
+            				trackers.remove(key);
             			}
-            			trackers.remove(key);
             		}
                 }
             }
@@ -257,8 +267,25 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		return min;
 	}
 	
-	private void seleccionarMaster() {
+	private void seleccionarMaster(String idMasterCaido) {
+		int id = Integer.parseInt(idMasterCaido);
+		if(trackers.containsKey(id)) {
+			trackers.remove(id);
+		}
 		
+		Boolean encontrado = false;
+		int min = 1;
+		do {
+			if(trackers.containsKey(min))
+			{
+				encontrado = true;
+			} else {
+				min++;
+			}
+		} while(!encontrado);
+		
+		if(min == GestorDeRedundanciaDeTrackers.ID)
+			GestorDeRedundanciaDeTrackers.esMaster = true;
 	}
 	
 	private void nuevaInstancia() {
@@ -307,8 +334,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		switch(estado) {
 			case 0: nuevaInstancia();
 			case 1: keepAlive();
-					comprobacionTrackers();
-					
+					comprobacionTrackers();	
 		}
 	}
 }
