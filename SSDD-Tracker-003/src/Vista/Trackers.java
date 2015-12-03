@@ -12,7 +12,8 @@ import Entidad.Tracker;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.text.DecimalFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,25 +73,62 @@ public class Trackers extends JPanel implements Observer {
 		
 		
 		
-		for(int i = 0;i<8;i++){
-			Object[] fila = new Object[3];
-			fila[0]= (int)Math.ceil(Math.random() * 100);
-			fila[1]= "1";
-			DecimalFormat numberFormat = new DecimalFormat("0.00");
-			fila[2]= numberFormat.format(Math.random() * 2)+" seg";
-			
-			dtm.addRow(fila);
-		}
+//		for(int i = 0;i<8;i++){
+//			Object[] fila = new Object[3];
+//			fila[0]= (int)Math.ceil(Math.random() * 100);
+//			fila[1]= "1";
+//			DecimalFormat numberFormat = new DecimalFormat("0.00");
+//			fila[2]= numberFormat.format(Math.random() * 2)+" seg";
+//			
+//			dtm.addRow(fila);
+//		}
 				
 		table.setModel(dtm);
 	}
 	
 	@Override
 	public void update(Observable o, Object trackers) {
-		System.out.println(trackers);
+		//System.out.println(trackers);
+		dtm = new DefaultTableModel() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				//All cells can`t be edited
+				return false;
+			}
+		};
+		dtm.addColumn("Id");
+		dtm.addColumn("Master");
+		dtm.addColumn("Último KA");
+		
 		for (int key : ((ConcurrentHashMap<Integer, Tracker>) trackers).keySet()) {
     		Tracker tracker = ((ConcurrentHashMap<Integer, Tracker>) trackers).get(key);
-    		System.out.println(tracker);
+    		
+    		
+    		Date ahora = new Date();
+    		long resta = ahora.getTime() - tracker.getUltimoKA().getTime();
+    		
+    		Date fechaResta = new Date(resta);
+    		Calendar calendar = Calendar.getInstance();
+    		calendar.setTime(fechaResta);
+    		int seconds = calendar.get(Calendar.SECOND);
+    		int miliseconds = calendar.get(Calendar.MILLISECOND);
+    		
+    		Object[] fila = new Object[3];
+			fila[0]= tracker.getId();
+			if(tracker.esMaster()) {
+				fila[1]= "Master";
+			}else {
+				fila[1]= "Slave";
+			}
+			fila[2]= seconds+":"+miliseconds;
+			
+			dtm.addRow(fila);
+			
+    		//System.out.println(tracker);
 		}
+		
+		table.setModel(dtm);
 	}
 }
