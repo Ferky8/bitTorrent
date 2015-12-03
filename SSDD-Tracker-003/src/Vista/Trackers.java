@@ -7,6 +7,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import Controlador.ControladorDetallesTracker;
+import Entidad.Tracker;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -14,6 +15,7 @@ import java.awt.Insets;
 import java.text.DecimalFormat;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Trackers extends JPanel implements Observer {
 
@@ -84,8 +86,11 @@ public class Trackers extends JPanel implements Observer {
 	}
 	
 	@Override
-	public void update(Observable o, Object arg) {
-		// TODO Auto-generated method stub
-		
+	public void update(Observable o, Object trackers) {
+		System.out.println(trackers);
+		for (int key : ((ConcurrentHashMap<Integer, Tracker>) trackers).keySet()) {
+    		Tracker tracker = ((ConcurrentHashMap<Integer, Tracker>) trackers).get(key);
+    		System.out.println(tracker);
+		}
 	}
 }

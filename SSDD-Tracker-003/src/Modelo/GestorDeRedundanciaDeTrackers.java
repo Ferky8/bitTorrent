@@ -20,7 +20,7 @@ import Entidad.Tracker;
 public class GestorDeRedundanciaDeTrackers extends Observable implements Runnable {
 	
 	private static GestorDeRedundanciaDeTrackers gestor = null;
-	private List<Observer> observers;
+	private static List<Observer> observers;
 	private static int ID;
 	private String IP;
 	private int puerto;
@@ -40,19 +40,20 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 
 	public void anadirObserver(Observer o) {
-		if (o != null && !this.observers.contains(o)) {
-			this.observers.add(o);
+		if (o != null && !observers.contains(o)) {
+			observers.add(o);
 		}
 	}
 	
 	public void eliminarObserver(Observer o) {
-		this.observers.remove(o);
+		observers.remove(o);
 	}
 	
-	private void alertarObservers(Object param) {
-		for(Observer o : this.observers) {
+	private void alertarObservers(ConcurrentHashMap<Integer, Tracker> trackers) {
+		for(Observer o : observers) {
 			if (o != null) {
-				o.update(null, param);
+				System.out.println("!!!!!!!!!!!!!!!!ALERTAAAAAAAAAAAA!!!!!!!!!!!!!!!!");
+				o.update(this, trackers);
 			}
 		}
 	}
@@ -62,7 +63,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			GestorDeRedundanciaDeTrackers.timerKA.cancel();
 			GestorDeRedundanciaDeTrackers.trackers.remove(GestorDeRedundanciaDeTrackers.ID);
 			GestorDeRedundanciaDeTrackers.socket.leaveGroup(GestorDeRedundanciaDeTrackers.group);
-			this.alertarObservers(null);
+			this.alertarObservers(trackers);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}		
@@ -73,7 +74,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		this.IP = IP;
 		this.puerto = puerto;
 		GestorDeRedundanciaDeTrackers.ID = ID;
-		this.observers = new ArrayList<Observer>();
+		observers = new ArrayList<Observer>();
 		
 		try {
 			GestorDeRedundanciaDeTrackers.socket = new MulticastSocket(puerto);
@@ -132,6 +133,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						mensaje = mensaje.substring(posInicio+1, posFin);
 						seleccionarMaster(mensaje);
 					}
+					alertarObservers(trackers);
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -219,6 +221,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 							}
             			} else {
             				trackers.remove(key);
+            				alertarObservers(trackers);
             			}
             		}
                 }
@@ -247,7 +250,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
 			
-		}	
+		}
 	}
 	
 	private int getMinID() {
@@ -286,6 +289,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		
 		if(min == GestorDeRedundanciaDeTrackers.ID)
 			GestorDeRedundanciaDeTrackers.esMaster = true;
+		
+		this.alertarObservers(trackers);
 	}
 	
 	private void nuevaInstancia() {
