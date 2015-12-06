@@ -61,6 +61,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	public void desconectar() {
 		try {
 			GestorDeRedundanciaDeTrackers.timerKA.cancel();
+			GestorDeRedundanciaDeTrackers.esMaster = false;
 			GestorDeRedundanciaDeTrackers.trackers.remove(GestorDeRedundanciaDeTrackers.ID);
 			GestorDeRedundanciaDeTrackers.socket.leaveGroup(GestorDeRedundanciaDeTrackers.group);
 			this.alertarObservers(trackers);
@@ -239,6 +240,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			} else {
 				Tracker t = trackers.get(Integer.parseInt(mensaje));
 				t.setUltimoKA(new Date());
+				t.setEsMaster(true);
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
 		}else {
@@ -287,9 +289,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			}
 		} while(!encontrado);
 		
-		if(min == GestorDeRedundanciaDeTrackers.ID)
+		if(min == GestorDeRedundanciaDeTrackers.ID) {
 			GestorDeRedundanciaDeTrackers.esMaster = true;
-		
+		}
+			
 		this.alertarObservers(trackers);
 	}
 	

@@ -71,18 +71,6 @@ public class Trackers extends JPanel implements Observer {
 		dtm.addColumn("Master");
 		dtm.addColumn("Último KA");
 		
-		
-		
-//		for(int i = 0;i<8;i++){
-//			Object[] fila = new Object[3];
-//			fila[0]= (int)Math.ceil(Math.random() * 100);
-//			fila[1]= "1";
-//			DecimalFormat numberFormat = new DecimalFormat("0.00");
-//			fila[2]= numberFormat.format(Math.random() * 2)+" seg";
-//			
-//			dtm.addRow(fila);
-//		}
-				
 		table.setModel(dtm);
 	}
 	
@@ -105,28 +93,28 @@ public class Trackers extends JPanel implements Observer {
 		for (int key : ((ConcurrentHashMap<Integer, Tracker>) trackers).keySet()) {
     		Tracker tracker = ((ConcurrentHashMap<Integer, Tracker>) trackers).get(key);
     		
-    		
-    		Date ahora = new Date();
-    		long resta = ahora.getTime() - tracker.getUltimoKA().getTime();
-    		
-    		Date fechaResta = new Date(resta);
-    		Calendar calendar = Calendar.getInstance();
-    		calendar.setTime(fechaResta);
-    		int seconds = calendar.get(Calendar.SECOND);
-    		int miliseconds = calendar.get(Calendar.MILLISECOND);
-    		
-    		Object[] fila = new Object[3];
-			fila[0]= tracker.getId();
-			if(tracker.esMaster()) {
-				fila[1]= "Master";
-			}else {
-				fila[1]= "Slave";
-			}
-			fila[2]= seconds+":"+miliseconds;
-			
-			dtm.addRow(fila);
-			
-    		//System.out.println(tracker);
+    		if(tracker.getId() != 0) {
+    			
+    			Date ahora = new Date();
+        		long resta = ahora.getTime() - tracker.getUltimoKA().getTime();
+        		
+        		Date fechaResta = new Date(resta);
+        		Calendar calendar = Calendar.getInstance();
+        		calendar.setTime(fechaResta);
+        		int seconds = calendar.get(Calendar.SECOND);
+        		int miliseconds = calendar.get(Calendar.MILLISECOND);
+        		
+        		Object[] fila = new Object[3];
+    			fila[0]= tracker.getId();
+    			if(tracker.esMaster()) {
+    				fila[1]= "Master";
+    			}else {
+    				fila[1]= "Slave";
+    			}
+    			fila[2]= seconds+":"+miliseconds;
+    			
+    			dtm.addRow(fila);
+    		}
 		}
 		
 		table.setModel(dtm);
