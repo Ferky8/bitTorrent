@@ -340,12 +340,17 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 	
 	private void sendBytes(FileInputStream fis) throws Exception {
-		byte[] buffer = new byte[1024];
+		byte[] buffer = new byte[1020];
 		int bytes = 0;
-		
+		String mensaje = "800-";
 		while((bytes=fis.read(buffer)) != -1)
 		{
+			byte[] buffer2 = new byte[1024];
+			System.arraycopy(mensaje, 0, buffer2, 0, mensaje.length());
+		    System.arraycopy(buffer, 0, buffer2, mensaje.length(), bytes);
 			
+			DatagramPacket messageOut = new DatagramPacket(buffer2, buffer2.length, group, puerto);
+			socket.send(messageOut);
 		}
 	}
 	
