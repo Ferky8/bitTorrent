@@ -30,7 +30,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private int estado = 0;
 	private static ConcurrentHashMap<Integer, Tracker> trackers;
 	private static Timer timerKA;
-	private Timer timerCT;
+	private static Timer timerCT;
 	
 	private Thread hilo;
 	private Thread hiloLector;
@@ -52,7 +52,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private void alertarObservers(ConcurrentHashMap<Integer, Tracker> trackers) {
 		for(Observer o : observers) {
 			if (o != null) {
-				System.out.println("!!!!!!!!!!!!!!!!ALERTAAAAAAAAAAAA!!!!!!!!!!!!!!!!");
 				o.update(this, trackers);
 			}
 		}
@@ -61,6 +60,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	public void desconectar() {
 		try {
 			GestorDeRedundanciaDeTrackers.timerKA.cancel();
+			GestorDeRedundanciaDeTrackers.timerCT.cancel();
 			GestorDeRedundanciaDeTrackers.esMaster = false;
 			GestorDeRedundanciaDeTrackers.trackers.remove(GestorDeRedundanciaDeTrackers.ID);
 			GestorDeRedundanciaDeTrackers.socket.leaveGroup(GestorDeRedundanciaDeTrackers.group);
@@ -210,9 +210,9 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
             		int seconds = calendar.get(Calendar.SECOND);
             		int miliseconds = calendar.get(Calendar.MILLISECOND);
             		
-                    //System.out.println("ID: " + key + " UKA: " + seconds + ":" + miliseconds);
+                    System.out.println("ID: " + key + " UKA: " + seconds + ":" + miliseconds);
             		
-            		if(seconds > 3) {
+            		if(seconds > 2) {
             			if(tracker.esMaster()) {
             				String mensaje = "400MC-"+tracker.getId()+"$";
             				try {
@@ -220,10 +220,9 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
-            			} else {
-            				trackers.remove(key);
-            				alertarObservers(trackers);
             			}
+            			trackers.remove(key);
+            			alertarObservers(trackers);
             		}
                 }
             }
@@ -243,12 +242,13 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				t.setEsMaster(true);
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
-		}else {
+		} else {
 			if(!trackers.containsKey(Integer.parseInt(mensaje))) {
 				trackers.put(Integer.parseInt(mensaje), new Tracker(Integer.parseInt(mensaje), false, new Date()));
 			} else {
 				Tracker t = trackers.get(Integer.parseInt(mensaje));
 				t.setUltimoKA(new Date());
+				t.setEsMaster(false);
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
 			
@@ -304,6 +304,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		}
 		
 		if(trackers.isEmpty()) {
+			GestorDeDatos gestorDeDatos = new GestorDeDatos("db/BaseDeDatos.db");
 			GestorDeRedundanciaDeTrackers.ID = 1;
 			GestorDeRedundanciaDeTrackers.esMaster = true;
 			estado = 1;
