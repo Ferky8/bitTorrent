@@ -1,5 +1,8 @@
 package Modelo;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -31,6 +34,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private static ConcurrentHashMap<Integer, Tracker> trackers;
 	private static Timer timerKA;
 	private static Timer timerCT;
+	private GestorDeDatos gestorDeDatos;
 	
 	private Thread hilo;
 	private Thread hiloLector;
@@ -118,9 +122,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						
 					} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
 						System.out.println("Recibida peticion de nueva instancia...");
-						int minID = getMinID();
-						enviar("202AI-"+minID+"#");
-						
+						sendIDandDB();						
 					} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
 						int posInicio = mensaje.indexOf('-');
 						int posFin = mensaje.indexOf('#');
@@ -304,7 +306,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		}
 		
 		if(trackers.isEmpty()) {
-			GestorDeDatos gestorDeDatos = new GestorDeDatos("db/BaseDeDatos.db");
+			gestorDeDatos = new GestorDeDatos("db/1BaseDeDatos.db");
 			GestorDeRedundanciaDeTrackers.ID = 1;
 			GestorDeRedundanciaDeTrackers.esMaster = true;
 			estado = 1;
@@ -318,6 +320,33 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				
 			}
 		}			
+	}
+	
+	private void sendIDandDB() {
+		int minID = getMinID();
+		FileInputStream fis = null;
+		String nombreDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+		File f = new File(nombreDB);
+		try {
+	      fis = new FileInputStream(nombreDB);
+	      enviar("202AI-"+minID+"#"+f.length()+"T");
+	      sendBytes(fis);
+	      fis.close();
+	    }
+	    catch (Exception e) {
+	    	e.printStackTrace();
+	    	System.out.println("No abre fichero");
+	    }
+	}
+	
+	private void sendBytes(FileInputStream fis) throws Exception {
+		byte[] buffer = new byte[1024];
+		int bytes = 0;
+		
+		while((bytes=fis.read(buffer)) != -1)
+		{
+			
+		}
 	}
 	
 	private synchronized void enviar(String mensaje) throws IOException {
