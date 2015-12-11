@@ -34,6 +34,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private int estado = 0;
 	private int tamanioDB = 0;
 	private boolean dbCompleta = false;
+	private String rutaDB;
 	private static ConcurrentHashMap<Integer, Tracker> trackers;
 	private static Timer timerKA;
 	private static Timer timerCT;
@@ -106,6 +107,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 	
 	class Lector implements Runnable {
+		private FileOutputStream fos = null;
+
 		@Override
 		public void run() {
 			try {
@@ -136,6 +139,14 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						posFin = mensaje.indexOf('T');
 						tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
 						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(id);
+						
+						rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+						
+						try {
+							fos = new FileOutputStream(rutaDB);
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						}
 						estado = 1;
 					} else if(mensaje.contains("400MC")) {
 						int posInicio = mensaje.indexOf('-');
@@ -143,24 +154,19 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						mensaje = mensaje.substring(posInicio+1, posFin);
 						seleccionarMaster(mensaje);
 					} else if(mensaje.contains("800-") && !dbCompleta) {
-						String rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
 						byte[] bytesRecibidos = new byte[1020];
 						System.arraycopy(messageIn.getData(), 4, bytesRecibidos, 0, bytesRecibidos.length);						
-						FileOutputStream fos = null;
-						try {
-							fos = new FileOutputStream(rutaDB);
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
+						
 						fos.write(bytesRecibidos, 0, bytesRecibidos.length);
-						try {
-							fos.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						
 						File db = new File(rutaDB);
 						System.out.println(db.length());
 						if(db.length() == tamanioDB) {
+							try {
+								fos.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 							dbCompleta = true;
 							System.out.println(dbCompleta);
 						}
@@ -376,9 +382,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			String mensaje = "800-";
 			while((bytes=fis.read(buffer)) != -1)
 			{
-				byte[] buffer2 = new byte[1024];
+				System.out.println(bytes);
+				byte[] buffer2 = new byte[mensaje.getBytes().length+bytes];
 				System.arraycopy(mensaje.getBytes(), 0, buffer2, 0, mensaje.getBytes().length);
-			    System.arraycopy(buffer, 0, buffer2, mensaje.getBytes().length, buffer.length);
+			    System.arraycopy(buffer, 0, buffer2, mensaje.getBytes().length, bytes);
 				
 				DatagramPacket messageOut = new DatagramPacket(buffer2, buffer2.length, group, puerto);
 				socket.send(messageOut);
