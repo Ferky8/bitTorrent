@@ -3,6 +3,7 @@ package Modelo;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -31,6 +32,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private static MulticastSocket socket;
 	private static InetAddress group;
 	private int estado = 0;
+	private int tamanioDB = 0;
+	private boolean dbCompleta = false;
 	private static ConcurrentHashMap<Integer, Tracker> trackers;
 	private static Timer timerKA;
 	private static Timer timerCT;
@@ -122,19 +125,45 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						
 					} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
 						System.out.println("Recibida peticion de nueva instancia...");
-						sendIDandDB();						
+						Thread hiloEnvioDB = new Thread(new EnvioDB(),"hilo envio DB");
+						hiloEnvioDB.start();						
 					} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
+						//System.out.println(mensaje);
 						int posInicio = mensaje.indexOf('-');
 						int posFin = mensaje.indexOf('#');
-						mensaje = mensaje.substring(posInicio+1, posFin);
-						//System.out.println(mensaje);
-						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(mensaje);
+						String id = mensaje.substring(posInicio+1, posFin);
+						posInicio = posFin;
+						posFin = mensaje.indexOf('T');
+						tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
+						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(id);
 						estado = 1;
 					} else if(mensaje.contains("400MC")) {
 						int posInicio = mensaje.indexOf('-');
 						int posFin = mensaje.indexOf('$');
 						mensaje = mensaje.substring(posInicio+1, posFin);
 						seleccionarMaster(mensaje);
+					} else if(mensaje.contains("800-") && !dbCompleta) {
+						String rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+						byte[] bytesRecibidos = new byte[1020];
+						System.arraycopy(messageIn.getData(), 4, bytesRecibidos, 0, bytesRecibidos.length);						
+						FileOutputStream fos = null;
+						try {
+							fos = new FileOutputStream(rutaDB);
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						}
+						fos.write(bytesRecibidos, 0, bytesRecibidos.length);
+						try {
+							fos.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						File db = new File(rutaDB);
+						System.out.println(db.length());
+						if(db.length() == tamanioDB) {
+							dbCompleta = true;
+							System.out.println(dbCompleta);
+						}
 					}
 					alertarObservers(trackers);
 				}
@@ -307,6 +336,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		
 		if(trackers.isEmpty()) {
 			gestorDeDatos = new GestorDeDatos("db/1BaseDeDatos.db");
+			dbCompleta = true;
 			GestorDeRedundanciaDeTrackers.ID = 1;
 			GestorDeRedundanciaDeTrackers.esMaster = true;
 			estado = 1;
@@ -322,36 +352,39 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		}			
 	}
 	
-	private void sendIDandDB() {
-		int minID = getMinID();
-		FileInputStream fis = null;
-		String nombreDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
-		File f = new File(nombreDB);
-		try {
-	      fis = new FileInputStream(nombreDB);
-	      enviar("202AI-"+minID+"#"+f.length()+"T");
-	      sendBytes(fis);
-	      fis.close();
-	    }
-	    catch (Exception e) {
-	    	e.printStackTrace();
-	    	System.out.println("No abre fichero");
-	    }
-	}
-	
-	private void sendBytes(FileInputStream fis) throws Exception {
-		byte[] buffer = new byte[1020];
-		int bytes = 0;
-		String mensaje = "800-";
-		while((bytes=fis.read(buffer)) != -1)
-		{
-			byte[] buffer2 = new byte[1024];
-			System.arraycopy(mensaje, 0, buffer2, 0, mensaje.length());
-		    System.arraycopy(buffer, 0, buffer2, mensaje.length(), bytes);
-			
-			DatagramPacket messageOut = new DatagramPacket(buffer2, buffer2.length, group, puerto);
-			socket.send(messageOut);
+	class EnvioDB implements Runnable {
+		@Override
+		public void run() {
+			int minID = getMinID();
+			FileInputStream fis = null;
+			String nombreDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+			File f = new File(nombreDB);
+			try {
+		      fis = new FileInputStream(nombreDB);
+		      enviar("202AI-"+minID+"#"+f.length()+"T");
+		      sendBytes(fis);
+		      fis.close();
+		    }
+		    catch (Exception e) {
+		    	e.printStackTrace();
+		    	System.out.println("No abre fichero");
+		    }			
 		}
+		private void sendBytes(FileInputStream fis) throws Exception {
+			byte[] buffer = new byte[1020];
+			int bytes = 0;
+			String mensaje = "800-";
+			while((bytes=fis.read(buffer)) != -1)
+			{
+				byte[] buffer2 = new byte[1024];
+				System.arraycopy(mensaje.getBytes(), 0, buffer2, 0, mensaje.getBytes().length);
+			    System.arraycopy(buffer, 0, buffer2, mensaje.getBytes().length, buffer.length);
+				
+				DatagramPacket messageOut = new DatagramPacket(buffer2, buffer2.length, group, puerto);
+				socket.send(messageOut);
+				System.out.println(messageOut);
+			}
+		}		
 	}
 	
 	private synchronized void enviar(String mensaje) throws IOException {
