@@ -70,6 +70,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			GestorDeRedundanciaDeTrackers.timerKA.cancel();
 			GestorDeRedundanciaDeTrackers.timerCT.cancel();
 			GestorDeRedundanciaDeTrackers.esMaster = false;
+			if(GestorDeRedundanciaDeTrackers.ID != 1) {
+				File f = new File("db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db");
+				if (f.exists()) f.delete();
+			}
 			GestorDeRedundanciaDeTrackers.trackers.remove(GestorDeRedundanciaDeTrackers.ID);
 			GestorDeRedundanciaDeTrackers.socket.leaveGroup(GestorDeRedundanciaDeTrackers.group);
 			this.alertarObservers(trackers);
@@ -129,25 +133,30 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 					} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
 						System.out.println("Recibida peticion de nueva instancia...");
 						Thread hiloEnvioDB = new Thread(new EnvioDBandID(),"hilo envio DB");
-						hiloEnvioDB.start();						
+						hiloEnvioDB.start();
+						
 					} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
 						//System.out.println(mensaje);
 						int posInicio = mensaje.indexOf('-');
 						int posFin = mensaje.indexOf('#');
 						String id = mensaje.substring(posInicio+1, posFin);
-						posInicio = posFin;
-						posFin = mensaje.indexOf('T');
-						tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
 						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(id);
-						
 						rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+						if(GestorDeRedundanciaDeTrackers.ID == 1) {
+							dbCompleta = true;
+							gestorDeDatos = new GestorDeDatos(rutaDB);
+						} else {
+							posInicio = posFin;
+							posFin = mensaje.indexOf('T');
+							tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
 						
-						try {
-							fos = new FileOutputStream(rutaDB);
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
+							try {
+								fos = new FileOutputStream(rutaDB);
+							} catch (FileNotFoundException e) {
+								e.printStackTrace();
+							}
 						}
-						estado = 1;
+						
 					} else if(mensaje.contains("400MC")) {
 						int posInicio = mensaje.indexOf('-');
 						int posFin = mensaje.indexOf('$');
@@ -169,6 +178,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 							}
 							dbCompleta = true;
 							System.out.println("Completada la BD :)");
+							gestorDeDatos = new GestorDeDatos(rutaDB);
+							//estado = 1;
 						}
 					}
 					alertarObservers(trackers);
@@ -206,6 +217,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 	
 	private void keepAlive() {
+		System.out.println("He comentado los estado = 1 y entro aki y no se porque ¿quien le llama?");
 		timerKA = new Timer();
 		timerKA.schedule( new TimerTask() {
 
@@ -258,8 +270,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 								e.printStackTrace();
 							}
             			}
-            			File f = new File("db/"+key+"BaseDeDatos.db");
-            			if (f.exists()) f.delete();
+            			if(GestorDeRedundanciaDeTrackers.ID != 1) {
+            				File f = new File("db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db");
+            				if (f.exists()) f.delete();
+            			}
             			trackers.remove(key);
             			alertarObservers(trackers);
             		}
@@ -330,9 +344,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		
 		if(min == GestorDeRedundanciaDeTrackers.ID) {
 			GestorDeRedundanciaDeTrackers.esMaster = true;
-			rutaDB = "db/MasterBaseDeDatos.db";
-			File f = new File("db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db");
-			if (f.exists()) f.delete();
 		}
 			
 		this.alertarObservers(trackers);
@@ -346,11 +357,11 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		}
 		
 		if(trackers.isEmpty()) {
-			gestorDeDatos = new GestorDeDatos("db/MasterBaseDeDatos.db");
-			dbCompleta = true;
 			GestorDeRedundanciaDeTrackers.ID = 1;
 			GestorDeRedundanciaDeTrackers.esMaster = true;
-			estado = 1;
+			gestorDeDatos = new GestorDeDatos("db/1BaseDeDatos.db");
+			dbCompleta = true;
+			//estado = 1;
 		} else {
 			GestorDeRedundanciaDeTrackers.ID = 0;
 			String mensaje = "200NI";
@@ -368,7 +379,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		public void run() {
 			int minID = getMinID();
 			FileInputStream fis = null;
-			String nombreDB = "db/MasterBaseDeDatos.db";
+			String nombreDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
 			File f = new File(nombreDB);
 			try {
 		      fis = new FileInputStream(nombreDB);
