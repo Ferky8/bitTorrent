@@ -128,7 +128,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						
 					} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
 						System.out.println("Recibida peticion de nueva instancia...");
-						Thread hiloEnvioDB = new Thread(new EnvioDB(),"hilo envio DB");
+						Thread hiloEnvioDB = new Thread(new EnvioDBandID(),"hilo envio DB");
 						hiloEnvioDB.start();						
 					} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
 						//System.out.println(mensaje);
@@ -160,15 +160,15 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 						fos.write(bytesRecibidos, 0, bytesRecibidos.length);
 						
 						File db = new File(rutaDB);
-						System.out.println(db.length());
-						if(db.length() == tamanioDB) {
+						//System.out.println(db.length());
+						if(db.length() >= tamanioDB) {
 							try {
 								fos.close();
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
 							dbCompleta = true;
-							System.out.println(dbCompleta);
+							System.out.println("Completada la BD :)");
 						}
 					}
 					alertarObservers(trackers);
@@ -245,9 +245,9 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
             		Calendar calendar = Calendar.getInstance();
             		calendar.setTime(fechaResta);
             		int seconds = calendar.get(Calendar.SECOND);
-            		int miliseconds = calendar.get(Calendar.MILLISECOND);
+            		//int miliseconds = calendar.get(Calendar.MILLISECOND);
             		
-                    System.out.println("ID: " + key + " UKA: " + seconds + ":" + miliseconds);
+                    //System.out.println("ID: " + key + " UKA: " + seconds + ":" + miliseconds);
             		
             		if(seconds > 2) {
             			if(tracker.esMaster()) {
@@ -258,6 +258,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 								e.printStackTrace();
 							}
             			}
+            			File f = new File("db/"+key+"BaseDeDatos.db");
+            			if (f.exists()) f.delete();
             			trackers.remove(key);
             			alertarObservers(trackers);
             		}
@@ -328,6 +330,9 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		
 		if(min == GestorDeRedundanciaDeTrackers.ID) {
 			GestorDeRedundanciaDeTrackers.esMaster = true;
+			rutaDB = "db/MasterBaseDeDatos.db";
+			File f = new File("db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db");
+			if (f.exists()) f.delete();
 		}
 			
 		this.alertarObservers(trackers);
@@ -341,7 +346,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		}
 		
 		if(trackers.isEmpty()) {
-			gestorDeDatos = new GestorDeDatos("db/1BaseDeDatos.db");
+			gestorDeDatos = new GestorDeDatos("db/MasterBaseDeDatos.db");
 			dbCompleta = true;
 			GestorDeRedundanciaDeTrackers.ID = 1;
 			GestorDeRedundanciaDeTrackers.esMaster = true;
@@ -358,12 +363,12 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		}			
 	}
 	
-	class EnvioDB implements Runnable {
+	class EnvioDBandID implements Runnable {
 		@Override
 		public void run() {
 			int minID = getMinID();
 			FileInputStream fis = null;
-			String nombreDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+			String nombreDB = "db/MasterBaseDeDatos.db";
 			File f = new File(nombreDB);
 			try {
 		      fis = new FileInputStream(nombreDB);
@@ -382,14 +387,14 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			String mensaje = "800-";
 			while((bytes=fis.read(buffer)) != -1)
 			{
-				System.out.println(bytes);
+				//System.out.println(bytes);
 				byte[] buffer2 = new byte[mensaje.getBytes().length+bytes];
 				System.arraycopy(mensaje.getBytes(), 0, buffer2, 0, mensaje.getBytes().length);
 			    System.arraycopy(buffer, 0, buffer2, mensaje.getBytes().length, bytes);
 				
 				DatagramPacket messageOut = new DatagramPacket(buffer2, buffer2.length, group, puerto);
 				socket.send(messageOut);
-				System.out.println(messageOut);
+				//System.out.println(messageOut);
 			}
 		}		
 	}
