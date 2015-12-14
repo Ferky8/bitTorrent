@@ -118,7 +118,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		hilo=new Thread(this,"hilo 1");
 		hilo.start();
 		cambiarEstado();
-		alertarObservers(trackers);
 	}
 	
 	public void parar(int ID) {
