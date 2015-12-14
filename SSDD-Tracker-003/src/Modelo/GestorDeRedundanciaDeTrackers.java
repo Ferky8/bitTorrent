@@ -24,7 +24,7 @@ import Entidad.Tracker;
 public class GestorDeRedundanciaDeTrackers extends Observable implements Runnable {
 	
 	private static GestorDeRedundanciaDeTrackers gestor = null;
-	private static List<Observer> observers;
+	private List<Observer> observers;
 	private static int ID;
 	private String IP;
 	private int puerto;
@@ -34,6 +34,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private int estado = 0;
 	private int tamanioDB = 0;
 	private boolean dbCompleta = false;
+	private FileOutputStream fos = null;
 	private String rutaDB;
 	private static ConcurrentHashMap<Integer, Tracker> trackers;
 	private static Timer timerKA;
@@ -41,10 +42,15 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private GestorDeDatos gestorDeDatos;
 	
 	private Thread hilo;
-	private Thread hiloLector;
 		
 	private GestorDeRedundanciaDeTrackers() {
 		observers = new ArrayList<Observer>();
+	}
+	
+	public static GestorDeRedundanciaDeTrackers getInstance() {
+		if(gestor == null)
+			gestor = new GestorDeRedundanciaDeTrackers();
+		return gestor ;
 	}
 
 	public void anadirObserver(Observer o) {
@@ -62,6 +68,16 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			if (o != null) {
 				o.update(this, trackers);
 			}
+		}
+	}
+	
+	private void cambiarEstado() {
+		switch(estado) {
+			case 0: nuevaInstancia();
+					break;
+			case 1: keepAlive();
+					comprobacionTrackers();	
+					break;
 		}
 	}
 	
@@ -87,7 +103,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		this.IP = IP;
 		this.puerto = puerto;
 		GestorDeRedundanciaDeTrackers.ID = ID;
-		observers = new ArrayList<Observer>();
 		
 		try {
 			GestorDeRedundanciaDeTrackers.socket = new MulticastSocket(puerto);
@@ -100,96 +115,14 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 		}
 		trackers = new ConcurrentHashMap<Integer, Tracker>();
 		
-		hiloLector = new Thread(new Lector(),"hilo lector");
-		hiloLector.start();
 		hilo=new Thread(this,"hilo 1");
-		hilo.start();		
+		hilo.start();
+		cambiarEstado();
+		alertarObservers(trackers);
 	}
 	
 	public void parar(int ID) {
 		
-	}
-	
-	class Lector implements Runnable {
-		private FileOutputStream fos = null;
-
-		@Override
-		public void run() {
-			try {
-				while(true){
-					byte[] buffer = new byte[1024];			
-					DatagramPacket messageIn = null;
-					messageIn = new DatagramPacket(buffer, buffer.length);
-					socket.receive(messageIn);
-					String mensaje = new String(messageIn.getData());
-					System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
-					
-					if(mensaje.contains("201KA")) {
-						int posInicio = mensaje.indexOf('-');
-						int posFin = mensaje.indexOf('$');
-						mensaje = mensaje.substring(posInicio+1, posFin);
-						actualizarTrackers(mensaje);
-						
-					} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
-						System.out.println("Recibida peticion de nueva instancia...");
-						Thread hiloEnvioDB = new Thread(new EnvioDBandID(),"hilo envio DB");
-						hiloEnvioDB.start();
-						
-					} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
-						//System.out.println(mensaje);
-						int posInicio = mensaje.indexOf('-');
-						int posFin = mensaje.indexOf('#');
-						String id = mensaje.substring(posInicio+1, posFin);
-						GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(id);
-						rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
-						if(GestorDeRedundanciaDeTrackers.ID == 1) {
-							dbCompleta = true;
-							gestorDeDatos = new GestorDeDatos(rutaDB);
-						} else {
-							posInicio = posFin;
-							posFin = mensaje.indexOf('T');
-							tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
-						
-							try {
-								fos = new FileOutputStream(rutaDB);
-							} catch (FileNotFoundException e) {
-								e.printStackTrace();
-							}
-						}
-						
-					} else if(mensaje.contains("400MC")) {
-						int posInicio = mensaje.indexOf('-');
-						int posFin = mensaje.indexOf('$');
-						mensaje = mensaje.substring(posInicio+1, posFin);
-						seleccionarMaster(mensaje);
-					} else if(mensaje.contains("800-") && !dbCompleta) {
-						byte[] bytesRecibidos = new byte[1020];
-						System.arraycopy(messageIn.getData(), 4, bytesRecibidos, 0, bytesRecibidos.length);						
-						
-						fos.write(bytesRecibidos, 0, bytesRecibidos.length);
-						
-						File db = new File(rutaDB);
-						//System.out.println(db.length());
-						if(db.length() >= tamanioDB) {
-							try {
-								fos.close();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-							dbCompleta = true;
-							System.out.println("Completada la BD :)");
-							gestorDeDatos = new GestorDeDatos(rutaDB);
-							//estado = 1;
-						}
-					}
-					alertarObservers(trackers);
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-		}		
 	}
 
 	public int getID() {
@@ -217,7 +150,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 	
 	private void keepAlive() {
-		System.out.println("He comentado los estado = 1 y entro aki y no se porque ¿quien le llama?");
 		timerKA = new Timer();
 		timerKA.schedule( new TimerTask() {
 
@@ -361,7 +293,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			GestorDeRedundanciaDeTrackers.esMaster = true;
 			gestorDeDatos = new GestorDeDatos("db/1BaseDeDatos.db");
 			dbCompleta = true;
-			//estado = 1;
+			estado = 1;
+			cambiarEstado();
 		} else {
 			GestorDeRedundanciaDeTrackers.ID = 0;
 			String mensaje = "200NI";
@@ -420,20 +353,84 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	public static void main(String args[]) {
 		
 	}
-	
-	public static GestorDeRedundanciaDeTrackers getInstance() {
-		if(gestor == null)
-			return new GestorDeRedundanciaDeTrackers();
-		else
-			return gestor ;
-	}
 
 	@Override
 	public void run() {
-		switch(estado) {
-			case 0: nuevaInstancia();
-			case 1: keepAlive();
-					comprobacionTrackers();	
+		try {
+			while(true){
+				byte[] buffer = new byte[1024];			
+				DatagramPacket messageIn = null;
+				messageIn = new DatagramPacket(buffer, buffer.length);
+				socket.receive(messageIn);
+				String mensaje = new String(messageIn.getData());
+				System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
+				
+				if(mensaje.contains("201KA")) {
+					int posInicio = mensaje.indexOf('-');
+					int posFin = mensaje.indexOf('$');
+					mensaje = mensaje.substring(posInicio+1, posFin);
+					actualizarTrackers(mensaje);
+					
+				} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
+					System.out.println("Recibida peticion de nueva instancia...");
+					Thread hiloEnvioDB = new Thread(new EnvioDBandID(),"hilo envio DB");
+					hiloEnvioDB.start();
+					
+				} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
+					//System.out.println(mensaje);
+					int posInicio = mensaje.indexOf('-');
+					int posFin = mensaje.indexOf('#');
+					String id = mensaje.substring(posInicio+1, posFin);
+					GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(id);
+					rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+					if(GestorDeRedundanciaDeTrackers.ID == 1) {
+						dbCompleta = true;
+						gestorDeDatos = new GestorDeDatos(rutaDB);
+						estado = 1;
+						cambiarEstado();
+					} else {
+						posInicio = posFin;
+						posFin = mensaje.indexOf('T');
+						tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
+					
+						try {
+							fos = new FileOutputStream(rutaDB);
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						}
+					}
+					
+				} else if(mensaje.contains("400MC")) {
+					int posInicio = mensaje.indexOf('-');
+					int posFin = mensaje.indexOf('$');
+					mensaje = mensaje.substring(posInicio+1, posFin);
+					seleccionarMaster(mensaje);
+				} else if(mensaje.contains("800-") && !dbCompleta) {
+					byte[] bytesRecibidos = new byte[1020];
+					System.arraycopy(messageIn.getData(), 4, bytesRecibidos, 0, bytesRecibidos.length);						
+					
+					fos.write(bytesRecibidos, 0, bytesRecibidos.length);
+					
+					File db = new File(rutaDB);
+					//System.out.println(db.length());
+					if(db.length() >= tamanioDB) {
+						try {
+							fos.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						dbCompleta = true;
+						System.out.println("Completada la BD :)");
+						gestorDeDatos = new GestorDeDatos(rutaDB);
+						estado = 1;
+						cambiarEstado();
+					}
+				}
+				alertarObservers(trackers);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 }

@@ -38,8 +38,8 @@ public class Configuracion extends JPanel {
 			"^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$";
 	private JTextField textField_3;
 	
-	public Configuracion(Trackers trackerDetailPanel) {
-		this.trackerDetailPanel = trackerDetailPanel;
+	public Configuracion(ControladorConfiguracion configuracion) {
+		this.configuracion = configuracion;
 		
 		pattern = Pattern.compile(IPADDRESS_PATTERN);
 		pattern_2 = Pattern.compile(PORT_PATTERN);
@@ -170,9 +170,7 @@ public class Configuracion extends JPanel {
 	}
 	
 	public void iniciar(String IP, int puerto, int ID) {
-		configuracion = new ControladorConfiguracion();
 		configuracion.iniciar(IP, puerto, ID);
-		configuracion.anadirObserver(trackerDetailPanel);
 	}
 	
 	public void parar(int ID) {
@@ -180,6 +178,7 @@ public class Configuracion extends JPanel {
 	}
 	
 	public void desconectar() {
+		configuracion.eliminarObserver(trackerDetailPanel);
 		configuracion.desconectar();
 	}
 }

@@ -22,15 +22,10 @@ public class Trackers extends JPanel implements Observer {
 
 	private static final long serialVersionUID = 1L;
 	
-	private ControladorDetallesTracker detallesTracker;
-		
 	private JTable table;
 	private DefaultTableModel dtm;
 	
-	public Trackers(ControladorDetallesTracker detallesTracker) {
-		
-		this.detallesTracker = detallesTracker;
-		
+	public Trackers(ControladorDetallesTracker detallesTracker) {		
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 450, 0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 14, 0, 220, 34, 0};
@@ -72,6 +67,7 @@ public class Trackers extends JPanel implements Observer {
 		dtm.addColumn("Último KA");
 		
 		table.setModel(dtm);
+		detallesTracker.anadirObserver(this);
 	}
 	
 	@Override
@@ -90,8 +86,9 @@ public class Trackers extends JPanel implements Observer {
 		dtm.addColumn("Master");
 		dtm.addColumn("Último KA");
 		
-		for (int key : ((ConcurrentHashMap<Integer, Tracker>) trackers).keySet()) {
-    		Tracker tracker = ((ConcurrentHashMap<Integer, Tracker>) trackers).get(key);
+		ConcurrentHashMap<Integer, Tracker> concurrentHashMap = (ConcurrentHashMap<Integer, Tracker>) trackers;
+		for (int key : concurrentHashMap.keySet()) {
+    		Tracker tracker = concurrentHashMap.get(key);
     		
     		if(tracker.getId() != 0) {
     			
