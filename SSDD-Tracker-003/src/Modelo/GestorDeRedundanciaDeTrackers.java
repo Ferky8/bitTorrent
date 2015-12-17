@@ -233,6 +233,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				Tracker t = trackers.get(Integer.parseInt(mensaje));
 				t.setUltimoKA(new Date());
 				t.setEsMaster(false);
+				
+				if(mensaje.contains("301"))
+					t.setPreparadoGuardar(true);
+				
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
 			
@@ -304,6 +308,53 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				
 			}
 		}			
+	}
+	
+	private void comprobarTodosOK() {
+		boolean todosOK = true;
+		
+		for (int key : trackers.keySet()) {
+    		Tracker tracker = trackers.get(key);
+    		
+    		if(!tracker.estaPreparadoGuardar()) {
+    			todosOK = false;
+    			break;
+    		}    			
+		}
+		
+		if(todosOK) {
+			for (int key : trackers.keySet()) {
+	    		Tracker tracker = trackers.get(key);
+	    		tracker.setPreparadoGuardar(false);
+	    		trackers.put(key, tracker);
+			}
+			
+			String mensaje = "302GI";
+			try {
+				enviar(mensaje);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private void guardarInformacion() {
+		
+	}
+	
+	public void peticionPeerRecibida() {
+		if(GestorDeRedundanciaDeTrackers.esMaster) {
+			Tracker t = trackers.get(GestorDeRedundanciaDeTrackers.ID);
+			t.setPreparadoGuardar(true);
+			trackers.put(GestorDeRedundanciaDeTrackers.ID, t);
+			
+			String mensaje = "300PG";
+			try {
+				enviar(mensaje);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	class EnvioDBandID implements Runnable {
@@ -398,12 +449,24 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 							e.printStackTrace();
 						}
 					}
+				// Preparaos para guardar
+				} else if(mensaje.contains("300PG") && !GestorDeRedundanciaDeTrackers.esMaster) {
+					String respuesta = "301OK-"+GestorDeRedundanciaDeTrackers.ID+"$";
+					enviar(respuesta);
+					
+				} else if(mensaje.contains("301OK") && GestorDeRedundanciaDeTrackers.esMaster) {
+					actualizarTrackers(mensaje);
+					comprobarTodosOK();
+					
+				} else if(mensaje.contains("302GI") && !GestorDeRedundanciaDeTrackers.esMaster) {
+					guardarInformacion();
 					
 				} else if(mensaje.contains("400MC")) {
 					int posInicio = mensaje.indexOf('-');
 					int posFin = mensaje.indexOf('$');
 					mensaje = mensaje.substring(posInicio+1, posFin);
 					seleccionarMaster(mensaje);
+					
 				} else if(mensaje.contains("800-") && !dbCompleta) {
 					byte[] bytesRecibidos = new byte[1020];
 					System.arraycopy(messageIn.getData(), 4, bytesRecibidos, 0, bytesRecibidos.length);						
@@ -428,7 +491,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				alertarObservers(trackers);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

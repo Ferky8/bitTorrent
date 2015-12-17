@@ -6,6 +6,7 @@ public class Tracker {
 	private int id;
 	private boolean esMaster;
 	private Date ultimoKA;
+	private boolean preparadoGuardar = false;
 	
 	public Tracker(int id, boolean esMaster, Date ultimoKA) {
 		this.id = id;
@@ -35,5 +36,13 @@ public class Tracker {
 
 	public void setUltimoKA(Date ultimoKA) {
 		this.ultimoKA = ultimoKA;
+	}
+
+	public boolean estaPreparadoGuardar() {
+		return preparadoGuardar;
+	}
+
+	public void setPreparadoGuardar(boolean preparadoGuardar) {
+		this.preparadoGuardar = preparadoGuardar;
 	}
 }
