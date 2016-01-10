@@ -5,10 +5,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,9 +15,23 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageListener;
+import javax.jms.Session;
+import javax.jms.BytesMessage;
+import javax.jms.Topic;
+import javax.jms.TopicConnection;
+import javax.jms.TopicConnectionFactory;
+import javax.jms.TopicPublisher;
+import javax.jms.TopicSession;
+import javax.jms.TopicSubscriber;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
 import Entidad.Tracker;
 
-public class GestorDeRedundanciaDeTrackers extends Observable implements Runnable {
+public class GestorDeRedundanciaDeTrackers extends Observable implements MessageListener {
 	
 	private static GestorDeRedundanciaDeTrackers gestor = null;
 	private List<Observer> observers;
@@ -29,8 +39,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private String IP;
 	private int puerto;
 	private static boolean esMaster = false;
-	private static MulticastSocket socket;
-	private static InetAddress group;
 	private int estado = 0;
 	private int tamanioDB = 0;
 	private boolean dbCompleta = false;
@@ -41,7 +49,13 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	private static Timer timerCT;
 	private GestorDeDatos gestorDeDatos;
 	
-	private Thread hilo;
+	String connectionFactoryName = "TopicConnectionFactory";
+	String topicJNDIName = "jndi.ssdd.topic";		
+	
+	TopicConnection topicConnection = null;
+	TopicSession topicSession = null;
+	TopicPublisher topicPublisher = null;
+	TopicSubscriber topicSubscriber = null;
 		
 	private GestorDeRedundanciaDeTrackers() {
 		observers = new ArrayList<Observer>();
@@ -91,32 +105,56 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				if (f.exists()) f.delete();
 			}
 			GestorDeRedundanciaDeTrackers.trackers.remove(GestorDeRedundanciaDeTrackers.ID);
-			GestorDeRedundanciaDeTrackers.socket.leaveGroup(GestorDeRedundanciaDeTrackers.group);
+			//Close resources
+			topicPublisher.close();
+			topicSubscriber.close();
+			topicSession.close();
+			topicConnection.close();
+			System.out.println("- Topic resources closed!");
 			this.alertarObservers(trackers);
-		} catch (IOException e) {
+		} catch (JMSException e) {
 			e.printStackTrace();
 		}		
 	}
 	
 
 	public void iniciar(String IP, int puerto, int ID) {
-		this.IP = IP;
-		this.puerto = puerto;
-		GestorDeRedundanciaDeTrackers.ID = ID;
 		
 		try {
-			GestorDeRedundanciaDeTrackers.socket = new MulticastSocket(puerto);
-			GestorDeRedundanciaDeTrackers.group = InetAddress.getByName(IP);
-			GestorDeRedundanciaDeTrackers.socket.joinGroup(group);
-		} catch (SocketException e) {
-			System.err.println("# Socket Error: " + e.getMessage());
-		} catch (IOException e) {
-			System.err.println("# IO Error: " + e.getMessage());
+			//JNDI Initial Context
+			Context ctx = new InitialContext();
+		
+			//Connection Factory
+			TopicConnectionFactory topicConnectionFactory = (TopicConnectionFactory) ctx.lookup(connectionFactoryName);
+			
+			//Message Destination
+			Topic myTopic = (Topic) ctx.lookup(topicJNDIName);
+			
+			//Connection			
+			topicConnection = topicConnectionFactory.createTopicConnection();
+			System.out.println("- Topic Connection created!");
+			
+			//Session
+			topicSession = topicConnection.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
+			System.out.println("- Topic Session created!");
+
+			//Message Publisher
+			topicPublisher = topicSession.createPublisher(myTopic);
+			System.out.println("- TopicPublisher created!");
+			
+			topicSubscriber = topicSession.createSubscriber(myTopic, "Filter = '1'", false);
+			topicSubscriber.setMessageListener(this);
+			System.out.println("- TopicSubscriber created!");
+			
+			//Begin message delivery
+			topicConnection.start();
+			
+		} catch (Exception e) {
+			System.err.println("# Topic Error: " + e.getMessage());
 		}
+			
 		trackers = new ConcurrentHashMap<Integer, Tracker>();
 		
-		hilo=new Thread(this,"hilo 1");
-		hilo.start();
 		cambiarEstado();
 	}
 	
@@ -197,7 +235,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
             				String mensaje = "400MC-"+tracker.getId()+"$";
             				try {
 								enviar(mensaje);
-							} catch (IOException e) {
+							} catch (IOException | JMSException e) {
 								e.printStackTrace();
 							}
             			}
@@ -332,7 +370,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			String mensaje = "302GI";
 			try {
 				enviar(mensaje);
-			} catch (IOException e) {
+			} catch (IOException | JMSException e) {
 				e.printStackTrace();
 			}
 		}
@@ -351,7 +389,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 			String mensaje = "300PG";
 			try {
 				enviar(mensaje);
-			} catch (IOException e) {
+			} catch (IOException | JMSException e) {
 				e.printStackTrace();
 			}
 		}
@@ -386,16 +424,39 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 				System.arraycopy(mensaje.getBytes(), 0, buffer2, 0, mensaje.getBytes().length);
 			    System.arraycopy(buffer, 0, buffer2, mensaje.getBytes().length, bytes);
 				
-				DatagramPacket messageOut = new DatagramPacket(buffer2, buffer2.length, group, puerto);
-				socket.send(messageOut);
+			    BytesMessage message = topicSession.createBytesMessage();
+				//Message Headers
+				message.setJMSType("TextMessage");
+				message.setJMSMessageID(Integer.toString(GestorDeRedundanciaDeTrackers.ID));
+				message.setJMSPriority(1);
+				//Message Properties
+				message.setStringProperty("Filter", "1");			
+				//Message Body
+				message.writeBytes(buffer2);
+				
+				//Publish the Messages
+				topicPublisher.publish(message);
+				System.out.println("- TextMessage published in the Topic! " + message);
 				//System.out.println(messageOut);
 			}
 		}		
 	}
 	
-	private synchronized void enviar(String mensaje) throws IOException {
-		DatagramPacket messageOut = new DatagramPacket(mensaje.getBytes(), mensaje.length(), group, puerto);
-		socket.send(messageOut);
+	private synchronized void enviar(String mensaje) throws IOException, JMSException {
+		BytesMessage message = topicSession.createBytesMessage();
+		//Message Headers
+		message.setJMSType("TextMessage");
+		message.setJMSMessageID(Integer.toString(GestorDeRedundanciaDeTrackers.ID));
+		message.setJMSPriority(1);
+		//Message Properties
+		message.setStringProperty("Filter", "1");			
+		//Message Body
+		message.writeUTF(mensaje);
+		
+		//Publish the Messages
+		topicPublisher.publish(message);
+		System.out.println("- TextMessage published in the Topic! " + message);
+		
 		//System.out.println(" - Sent a message to '" + messageOut.getAddress().getHostAddress() + ":" + messageOut.getPort() + 
         //        "' -> " + new String(messageOut.getData()) + " [" + messageOut.getLength() + " byte(s)]");
 	}
@@ -405,92 +466,87 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Runnabl
 	}
 
 	@Override
-	public void run() {
+	public void onMessage(Message message) {
 		try {
-			while(true){
-				byte[] buffer = new byte[1024];			
-				DatagramPacket messageIn = null;
-				messageIn = new DatagramPacket(buffer, buffer.length);
-				socket.receive(messageIn);
-				String mensaje = new String(messageIn.getData());
-				System.out.println(" - Received a message from '" + messageIn.getAddress().getHostAddress() + ":" + messageIn.getPort() + "' -> " + new String(messageIn.getData()) + " [" + messageIn.getLength() + " byte(s)]");			
+			byte[] messageIn = new byte[1024];
+			((BytesMessage) message).readBytes(messageIn);
+			String mensaje = new String(messageIn);
+			System.out.println("     - TopicListener: TextMessage '" + mensaje);
+			if(mensaje.contains("201KA")) {
+				int posInicio = mensaje.indexOf('-');
+				int posFin = mensaje.indexOf('$');
+				mensaje = mensaje.substring(posInicio+1, posFin);
+				actualizarTrackers(mensaje);
 				
-				if(mensaje.contains("201KA")) {
-					int posInicio = mensaje.indexOf('-');
-					int posFin = mensaje.indexOf('$');
-					mensaje = mensaje.substring(posInicio+1, posFin);
-					actualizarTrackers(mensaje);
-					
-				} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
-					System.out.println("Recibida peticion de nueva instancia...");
-					Thread hiloEnvioDB = new Thread(new EnvioDBandID(),"hilo envio DB");
-					hiloEnvioDB.start();
-					
-				} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
-					//System.out.println(mensaje);
-					int posInicio = mensaje.indexOf('-');
-					int posFin = mensaje.indexOf('#');
-					String id = mensaje.substring(posInicio+1, posFin);
-					GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(id);
-					rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
-					if(GestorDeRedundanciaDeTrackers.ID == 1) {
-						dbCompleta = true;
-						gestorDeDatos = new GestorDeDatos(rutaDB);
-						estado = 1;
-						cambiarEstado();
-					} else {
-						posInicio = posFin;
-						posFin = mensaje.indexOf('T');
-						tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
-					
-						try {
-							fos = new FileOutputStream(rutaDB);
-						} catch (FileNotFoundException e) {
-							e.printStackTrace();
-						}
-					}
-				// Preparaos para guardar
-				} else if(mensaje.contains("300PG") && !GestorDeRedundanciaDeTrackers.esMaster) {
-					String respuesta = "301OK-"+GestorDeRedundanciaDeTrackers.ID+"$";
-					enviar(respuesta);
-					
-				} else if(mensaje.contains("301OK") && GestorDeRedundanciaDeTrackers.esMaster) {
-					actualizarTrackers(mensaje);
-					comprobarTodosOK();
-					
-				} else if(mensaje.contains("302GI") && !GestorDeRedundanciaDeTrackers.esMaster) {
-					guardarInformacion();
-					
-				} else if(mensaje.contains("400MC")) {
-					int posInicio = mensaje.indexOf('-');
-					int posFin = mensaje.indexOf('$');
-					mensaje = mensaje.substring(posInicio+1, posFin);
-					seleccionarMaster(mensaje);
-					
-				} else if(mensaje.contains("800-") && !dbCompleta) {
-					byte[] bytesRecibidos = new byte[1020];
-					System.arraycopy(messageIn.getData(), 4, bytesRecibidos, 0, bytesRecibidos.length);						
-					
-					fos.write(bytesRecibidos, 0, bytesRecibidos.length);
-					
-					File db = new File(rutaDB);
-					//System.out.println(db.length());
-					if(db.length() >= tamanioDB) {
-						try {
-							fos.close();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-						dbCompleta = true;
-						System.out.println("Completada la BD :)");
-						gestorDeDatos = new GestorDeDatos(rutaDB);
-						estado = 1;
-						cambiarEstado();
+			} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
+				System.out.println("Recibida peticion de nueva instancia...");
+				Thread hiloEnvioDB = new Thread(new EnvioDBandID(),"hilo envio DB");
+				hiloEnvioDB.start();
+				
+			} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
+				//System.out.println(mensaje);
+				int posInicio = mensaje.indexOf('-');
+				int posFin = mensaje.indexOf('#');
+				String id = mensaje.substring(posInicio+1, posFin);
+				GestorDeRedundanciaDeTrackers.ID = Integer.parseInt(id);
+				rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
+				if(GestorDeRedundanciaDeTrackers.ID == 1) {
+					dbCompleta = true;
+					gestorDeDatos = new GestorDeDatos(rutaDB);
+					estado = 1;
+					cambiarEstado();
+				} else {
+					posInicio = posFin;
+					posFin = mensaje.indexOf('T');
+					tamanioDB = Integer.parseInt(mensaje.substring(posInicio+1, posFin));
+				
+					try {
+						fos = new FileOutputStream(rutaDB);
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
 					}
 				}
-				alertarObservers(trackers);
+			// Preparaos para guardar
+			} else if(mensaje.contains("300PG") && !GestorDeRedundanciaDeTrackers.esMaster) {
+				String respuesta = "301OK-"+GestorDeRedundanciaDeTrackers.ID+"$";
+				enviar(respuesta);
+				
+			} else if(mensaje.contains("301OK") && GestorDeRedundanciaDeTrackers.esMaster) {
+				actualizarTrackers(mensaje);
+				comprobarTodosOK();
+				
+			} else if(mensaje.contains("302GI") && !GestorDeRedundanciaDeTrackers.esMaster) {
+				guardarInformacion();
+				
+			} else if(mensaje.contains("400MC")) {
+				int posInicio = mensaje.indexOf('-');
+				int posFin = mensaje.indexOf('$');
+				mensaje = mensaje.substring(posInicio+1, posFin);
+				seleccionarMaster(mensaje);
+				
+			} else if(mensaje.contains("800-") && !dbCompleta) {
+				byte[] bytesRecibidos = new byte[1020];
+				System.arraycopy(messageIn, 4, bytesRecibidos, 0, bytesRecibidos.length);						
+				
+				fos.write(bytesRecibidos, 0, bytesRecibidos.length);
+				
+				File db = new File(rutaDB);
+				//System.out.println(db.length());
+				if(db.length() >= tamanioDB) {
+					try {
+						fos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					dbCompleta = true;
+					System.out.println("Completada la BD :)");
+					gestorDeDatos = new GestorDeDatos(rutaDB);
+					estado = 1;
+					cambiarEstado();
+				}
 			}
-		} catch (IOException e) {
+			alertarObservers(trackers);
+		} catch (IOException | JMSException e) {
 			e.printStackTrace();
 		}
 	}
