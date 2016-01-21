@@ -515,7 +515,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				actualizarTrackers(mensaje);
 				comprobarTodosOK();
 				
-			} else if(mensaje.contains("302GI") && !GestorDeRedundanciaDeTrackers.esMaster) {
+			} else if(mensaje.contains("302GI")) {
 				guardarInformacion();
 				
 			} else if(mensaje.contains("400MC")) {

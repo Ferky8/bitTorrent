@@ -21,7 +21,7 @@ public class Peers extends JPanel {
 	private JTable table2;
 	private DefaultTableModel dtm2;
 	
-	public Peers() {
+	public Peers(ControladorDetallesPeer detallesPeer) {
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 450, 0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 14, 0, 220, 34, 0};
@@ -82,7 +82,4 @@ public class Peers extends JPanel {
 		table2.getColumn("Puerto").setPreferredWidth(24);
 	}
 	
-	public void cargarDatos() {
-		detallesPeer.cargarDatos();
-	}
 }

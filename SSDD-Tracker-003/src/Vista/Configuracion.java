@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import Controlador.ControladorConfiguracion;
+import Controlador.ControladorDetallesPeer;
 
 import java.awt.event.ActionListener;
 import java.util.regex.Pattern;
@@ -21,6 +22,7 @@ public class Configuracion extends JPanel {
 	private static final long serialVersionUID = 1L;
 	
 	private ControladorConfiguracion configuracion;
+	private ControladorDetallesPeer detallesPeer;
 	private Trackers trackerDetailPanel;
 	private JTextField textField;
 	private JTextField textField_1;
@@ -38,8 +40,9 @@ public class Configuracion extends JPanel {
 			"^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$";
 	private JTextField textField_3;
 	
-	public Configuracion(ControladorConfiguracion configuracion) {
+	public Configuracion(ControladorConfiguracion configuracion, ControladorDetallesPeer detallesPeer) {
 		this.configuracion = configuracion;
+		this.detallesPeer = detallesPeer;
 		
 		pattern = Pattern.compile(IPADDRESS_PATTERN);
 		pattern_2 = Pattern.compile(PORT_PATTERN);
@@ -87,7 +90,7 @@ public class Configuracion extends JPanel {
 					JOptionPane.showMessageDialog(null, "Puerto T-P invalido", "ERROR", JOptionPane.ERROR_MESSAGE);
 				//Si esta todo bien
 				} else {
-					iniciar(textField.getText(), Integer.parseInt(textField_1.getText()), Integer.parseInt(textField_2.getText()));
+					iniciar(textField.getText(), Integer.parseInt(textField_1.getText()), Integer.parseInt(textField_2.getText()), Integer.parseInt(textField_3.getText()));
 				}
 			}
 		});
@@ -165,12 +168,13 @@ public class Configuracion extends JPanel {
 		textField.setText("228.4.4.4");
 		textField_1.setText("9000");
 		textField_2.setText("1");
-		textField_3.setText("1234");
+		textField_3.setText("6969");
 		
 	}
 	
-	public void iniciar(String IP, int puerto, int ID) {
+	public void iniciar(String IP, int puerto, int ID, int puertoP) {
 		configuracion.iniciar(IP, puerto, ID);
+		detallesPeer.iniciar("127.0.0.1", puertoP);
 	}
 	
 	public void parar(int ID) {

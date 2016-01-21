@@ -3,11 +3,12 @@ package Controlador;
 import java.util.List;
 
 import Modelo.GestorDeDatos;
+import Modelo.GestorDeTrackerBitTorrent;
 
-public class ControladorDetallesPeer {
-	private GestorDeDatos gestorDeDatos;
+public class ControladorDetallesPeer {	
 	
-	public List<String> cargarDatos() {
-		return gestorDeDatos.cargarDatos();
+	public void iniciar(String IP, int puerto) {
+		GestorDeTrackerBitTorrent.getInstance().iniciar(IP, puerto);
 	}
+	
 }

@@ -9,6 +9,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import Controlador.ControladorConfiguracion;
+import Controlador.ControladorDetallesPeer;
 import Controlador.ControladorDetallesTracker;
 
 import javax.swing.JTabbedPane;
@@ -50,10 +51,11 @@ public class TrackerMain extends JFrame {
 		
 		ControladorConfiguracion configuracion = new ControladorConfiguracion();
 		ControladorDetallesTracker detallesTracker =  new ControladorDetallesTracker();
+		ControladorDetallesPeer detallesPeer = new ControladorDetallesPeer();
 		
-		Component tab = new Configuracion(configuracion);
+		Component tab = new Configuracion(configuracion, detallesPeer);
 		Component tab2 = new Trackers(detallesTracker);
-		Component tab3 = new Peers();
+		Component tab3 = new Peers(detallesPeer);
 		
 		tabbedPane.addTab("Configuración", null, tab, null);
 				
