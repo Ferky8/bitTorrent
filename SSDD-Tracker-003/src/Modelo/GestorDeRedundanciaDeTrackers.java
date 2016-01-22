@@ -44,9 +44,12 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 	private boolean dbCompleta = false;
 	private FileOutputStream fos = null;
 	private String rutaDB;
+	private boolean preparadoGuardar = false;
+	private static int count;
 	private static ConcurrentHashMap<Integer, Tracker> trackers;
 	private static Timer timerKA;
 	private static Timer timerCT;
+	private static Timer timerOK;
 	private GestorDeDatos gestorDeDatos;
 	
 	String connectionFactoryName = "TopicConnectionFactory";
@@ -348,15 +351,14 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 		}			
 	}
 	
-	private void comprobarTodosOK() {
+	private boolean comprobarTodosOK() {
 		boolean todosOK = true;
 		
 		for (int key : trackers.keySet()) {
     		Tracker tracker = trackers.get(key);
     		
     		if(!tracker.estaPreparadoGuardar()) {
-    			todosOK = false;
-    			break;
+    			return todosOK = false;
     		}    			
 		}
 		
@@ -374,6 +376,8 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				e.printStackTrace();
 			}
 		}
+		
+		return todosOK;
 	}
 	
 	private void guardarInformacion() {
@@ -386,13 +390,39 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 			t.setPreparadoGuardar(true);
 			trackers.put(GestorDeRedundanciaDeTrackers.ID, t);
 			
+			//Dar tiempo a que todos los trackers reciban la peticion del peer
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			
 			String mensaje = "300PG";
 			try {
 				enviar(mensaje);
 			} catch (IOException | JMSException e) {
 				e.printStackTrace();
 			}
+			
+			count = 0;
+			timerOK = new Timer();
+			timerOK.schedule( new TimerTask() {
+
+	            @Override
+	            public void run() {
+	            	count++;
+	            	if(count == 4 || comprobarTodosOK())
+	            		timerOK.cancel();	            		
+	            }
+	        }, 0, 1000);
+						
+		} else {
+			preparadoGuardar = true;
 		}
+	}
+	
+	public boolean soyMaster() {
+		return esMaster;
 	}
 	
 	class EnvioDBandID implements Runnable {
@@ -508,9 +538,11 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				}
 			// Preparaos para guardar
 			} else if(mensaje.contains("300PG") && !GestorDeRedundanciaDeTrackers.esMaster) {
-				String respuesta = "301OK-"+GestorDeRedundanciaDeTrackers.ID+"$";
-				enviar(respuesta);
-				
+				if(preparadoGuardar) {
+					String respuesta = "301OK-"+GestorDeRedundanciaDeTrackers.ID+"$";
+					enviar(respuesta);
+					preparadoGuardar = false;
+				}				
 			} else if(mensaje.contains("301OK") && GestorDeRedundanciaDeTrackers.esMaster) {
 				actualizarTrackers(mensaje);
 				comprobarTodosOK();

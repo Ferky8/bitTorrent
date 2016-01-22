@@ -8,6 +8,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import udp.messages.ConnectRequest;
+import udp.messages.ConnectResponse;
+
 public class GestorDeTrackerBitTorrent implements Runnable {
 	
 	private static GestorDeTrackerBitTorrent gestor = null;
@@ -44,19 +47,33 @@ public class GestorDeTrackerBitTorrent implements Runnable {
 	public void run() {
 		while(true) {
 			try {
-				DatagramPacket request = null;
-				DatagramPacket reply = null;
+				DatagramPacket receive = null;
+				DatagramPacket send = null;
 				byte[] buffer = new byte[1024];
 				
 				System.out.println(" - Waiting for connections '" + 
 				                       udpSocket.getLocalAddress().getHostAddress() + ":" + 
 				                       puerto + "' ...");
 				
-				request = new DatagramPacket(buffer, buffer.length);
-				udpSocket.receive(request);	
+				receive = new DatagramPacket(buffer, buffer.length);
+				udpSocket.receive(receive);	
 				
-				System.out.println(" - Received a request from '" + request.getAddress().getHostAddress() + ":" + request.getPort() + 
-		                   "' -> " + new String(request.getData()) + " [" + request.getLength() + " byte(s)]");
+				System.out.println(" - Received a request from '" + receive.getAddress().getHostAddress() + ":" + receive.getPort() + 
+		                   "' -> " + new String(receive.getData()) + " [" + receive.getLength() + " byte(s)]");
+								
+				ConnectRequest request = ConnectRequest.parse(receive.getData());
+				 
+				System.out.println("Connect Request: " + request.getAction() + " " + request.getTransactionId() + " " + request.getConnectionId());
+				
+				ConnectResponse response = new ConnectResponse();
+				response.setTransactionId(request.getTransactionId());
+				response.setConnectionId(request.getConnectionId());
+				
+				System.out.println("Response: " + response.getAction() + " " + response.getTransactionId() + " " + response.getConnectionId());
+				 
+				byte[] byteMsg = response.getBytes();
+				send = new DatagramPacket(byteMsg, byteMsg.length, receive.getAddress(), receive.getPort());
+				udpSocket.send(send);				
 				
 			} catch (IOException e) {
 				System.err.println("# UDPServer IO error: " + e.getMessage());
