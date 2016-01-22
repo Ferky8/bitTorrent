@@ -14,15 +14,20 @@ public class GestorDeTrackerBitTorrent implements Runnable {
 	private DatagramSocket udpSocket;
 	private int puerto;
 	
+	private Thread hilo;
+	
 	public void iniciar(String IP, int puerto) {
 		this.puerto = puerto;
+
+		hilo=new Thread(this,"hilo GestorDeTrackerBitTorrent");
+		hilo.start();
+		
 		try {
 			udpSocket = new DatagramSocket(puerto, InetAddress.getByName(IP));			
 		} catch (SocketException | UnknownHostException e) {
 			System.err.println("# UDPServer Socket error: " + e.getMessage());
 		}
 		
-		this.run();
 	}
 	
 	public static GestorDeTrackerBitTorrent getInstance() {
@@ -49,6 +54,10 @@ public class GestorDeTrackerBitTorrent implements Runnable {
 				
 				request = new DatagramPacket(buffer, buffer.length);
 				udpSocket.receive(request);	
+				
+				System.out.println(" - Received a request from '" + request.getAddress().getHostAddress() + ":" + request.getPort() + 
+		                   "' -> " + new String(request.getData()) + " [" + request.getLength() + " byte(s)]");
+				
 			} catch (IOException e) {
 				System.err.println("# UDPServer IO error: " + e.getMessage());
 			}
