@@ -31,7 +31,7 @@ public class GestorDeTrackerBitTorrent extends Observable implements Runnable {
 	private int seeders;
 	private int leechers;
 	private Peer peer;
-	private List<Observer> observers = new ArrayList<Observer>();;
+	private List<Observer> observers = new ArrayList<Observer>();
 	
 	private Thread hilo;
 	
@@ -197,8 +197,6 @@ public class GestorDeTrackerBitTorrent extends Observable implements Runnable {
 							announceResp.setInterval(1000);
 						else
 							announceResp.setInterval(0);
-						
-						//Guardar la informacion del Peer en la DB
 						
 						byte[] byteMsg = announceResp.getBytes();
 						send = new DatagramPacket(byteMsg, byteMsg.length, receive.getAddress(), receive.getPort());

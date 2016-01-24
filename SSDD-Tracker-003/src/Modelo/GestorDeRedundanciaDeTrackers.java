@@ -217,7 +217,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 
             @Override
             public void run() {
-            	//System.out.println("IDs de los trackers de hashmap: ");
             	for (int key : trackers.keySet()) {
             		
             		Tracker tracker = trackers.get(key);
@@ -229,9 +228,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
             		Calendar calendar = Calendar.getInstance();
             		calendar.setTime(fechaResta);
             		int seconds = calendar.get(Calendar.SECOND);
-            		//int miliseconds = calendar.get(Calendar.MILLISECOND);
-            		
-                    //System.out.println("ID: " + key + " UKA: " + seconds + ":" + miliseconds);
             		
             		if(seconds > 2) {
             			if(tracker.esMaster()) {
@@ -268,7 +264,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
 		} else {
-			System.out.println("PPPRRRRRUUUUUUUUEEEEEEEBBBBBBBAAAAAAAAAA "+Integer.parseInt(mensaje));
 			if(!trackers.containsKey(Integer.parseInt(mensaje))) {
 				trackers.put(Integer.parseInt(mensaje), new Tracker(Integer.parseInt(mensaje), false, new Date()));
 			} else {
@@ -278,7 +273,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				
 				if(esPorPeer) {
 					t.setPreparadoGuardar(true);
-					System.out.println(Integer.parseInt(mensaje) + " Preparado para guardar");
 				}
 				
 				trackers.put(Integer.parseInt(mensaje), t);
@@ -355,12 +349,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 	}
 	
 	private boolean comprobarTodosOK() {
-		System.out.println("COMPROBANDOOOOOOOOO TODOS OK...................");
 		boolean todosOK = true;
 		
 		for (int key : trackers.keySet()) {
     		Tracker tracker = trackers.get(key);
-    		System.out.println(key + "         " + tracker.estaPreparadoGuardar());
     		if(!tracker.estaPreparadoGuardar()) {
     			return todosOK = false;
     		}    			
@@ -380,11 +372,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				e.printStackTrace();
 			}
 		}
-		
-		if(todosOK)
-			System.out.println("GUARDAAAAAAAAAAAAAAAAAAAAAAAD");
-		else
-			System.out.println("NO ESTABAN TODOS PREPARADOS PARA GUARDAR");
 		
 		return todosOK;
 	}
@@ -454,7 +441,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 			String mensaje = "800-";
 			while((bytes=fis.read(buffer)) != -1)
 			{
-				//System.out.println(bytes);
 				byte[] buffer2 = new byte[mensaje.getBytes().length+bytes];
 				System.arraycopy(mensaje.getBytes(), 0, buffer2, 0, mensaje.getBytes().length);
 			    System.arraycopy(buffer, 0, buffer2, mensaje.getBytes().length, bytes);
@@ -472,7 +458,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				//Publish the Messages
 				topicPublisher.publish(message);
 				System.out.println("- TextMessage published in the Topic! " + message);
-				//System.out.println(messageOut);
 			}
 		}		
 	}
@@ -515,7 +500,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				hiloEnvioDB.start();
 				
 			} else if(mensaje.contains("202AI") && GestorDeRedundanciaDeTrackers.ID == 0) {
-				//System.out.println(mensaje);
 				int posInicio = mensaje.indexOf('-');
 				int posFin = mensaje.indexOf('#');
 				String id = mensaje.substring(posInicio+1, posFin);
@@ -537,7 +521,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 						e.printStackTrace();
 					}
 				}
-			// Preparaos para guardar
 			} else if(mensaje.contains("300PG") && !GestorDeRedundanciaDeTrackers.esMaster) {
 				if(preparadoGuardar) {
 					String respuesta = "301OK-"+GestorDeRedundanciaDeTrackers.ID+"$";
@@ -566,7 +549,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				fos.write(bytesRecibidos, 0, bytesRecibidos.length);
 				
 				File db = new File(rutaDB);
-				//System.out.println(db.length());
 				if(db.length() >= tamanioDB) {
 					try {
 						fos.close();

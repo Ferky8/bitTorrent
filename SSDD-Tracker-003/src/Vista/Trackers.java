@@ -72,7 +72,6 @@ public class Trackers extends JPanel implements Observer {
 	
 	@Override
 	public void update(Observable o, Object trackers) {
-		//System.out.println(trackers);
 		dtm = new DefaultTableModel() {
 			private static final long serialVersionUID = 1L;
 

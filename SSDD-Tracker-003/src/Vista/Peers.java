@@ -8,16 +8,12 @@ import javax.swing.table.DefaultTableModel;
 
 import Controlador.ControladorDetallesPeer;
 import Entidad.Peer;
-import Entidad.Tracker;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Peers extends JPanel implements Observer {
 

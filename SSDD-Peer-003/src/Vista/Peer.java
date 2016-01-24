@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 import Controlador.ControladorPeer;
@@ -21,7 +22,6 @@ public class Peer extends JFrame {
 	private static final long serialVersionUID = 1L;
 	
 	private JTextField textField;
-	private JTextField textField_2;
 	private Pattern pattern;
 	private Pattern pattern_2;
 	
@@ -40,23 +40,35 @@ public class Peer extends JFrame {
 	
 	public Peer() {
 		
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 400, 400);
-		
 		pattern = Pattern.compile(IPADDRESS_PATTERN);
 		pattern_2 = Pattern.compile(PORT_PATTERN);
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 400, 343);
 	    
 		GridBagLayout gbl_c = new GridBagLayout();
 		gbl_c.columnWidths = new int[]{0, 0, 0, 30, 0, 0, 0, 30, 0, 0};
-		gbl_c.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		gbl_c.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
 		gbl_c.columnWeights = new double[]{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, Double.MIN_VALUE};
-		gbl_c.rowWeights = new double[]{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+		gbl_c.rowWeights = new double[]{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gbl_c);
 		
 		btnIniciar = new JButton("Iniciar");
 		btnIniciar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				iniciar(textField.getText(), Integer.parseInt(textField_1.getText()));
+				//Si estan mal la IP y el puerto
+				if (!(pattern.matcher(textField.getText()).matches()) && !(pattern_2.matcher(textField_1.getText()).matches())) {
+					JOptionPane.showMessageDialog(null, "IP y puerto invalidos", "ERROR", JOptionPane.ERROR_MESSAGE);
+				//Si esta mal solo la IP
+				} else if (!(pattern.matcher(textField.getText()).matches())){
+					JOptionPane.showMessageDialog(null, "IP invalida", "ERROR", JOptionPane.ERROR_MESSAGE);
+				//Si esta mal solo el puerto
+				} else if (!(pattern_2.matcher(textField_1.getText()).matches())){
+					JOptionPane.showMessageDialog(null, "Puerto invalido", "ERROR", JOptionPane.ERROR_MESSAGE);
+				//Si esta todo bien
+				} else {
+					iniciar(textField.getText(), Integer.parseInt(textField_1.getText()));
+				}
 			}
 		});
 		GridBagConstraints gbc_btnIniciar = new GridBagConstraints();
@@ -102,25 +114,7 @@ public class Peer extends JFrame {
 		gbc_textField_1.gridy = 5;
 		getContentPane().add(textField_1, gbc_textField_1);
 		
-		JLabel lblId = new JLabel("ID");
-		GridBagConstraints gbc_lblId = new GridBagConstraints();
-		gbc_lblId.insets = new Insets(0, 0, 5, 5);
-		gbc_lblId.gridx = 1;
-		gbc_lblId.gridy = 7;
-		getContentPane().add(lblId, gbc_lblId);
-		
-		textField_2 = new JTextField();
-		GridBagConstraints gbc_textField_2 = new GridBagConstraints();
-		gbc_textField_2.gridwidth = 5;
-		gbc_textField_2.fill = GridBagConstraints.HORIZONTAL;
-		gbc_textField_2.insets = new Insets(0, 0, 5, 5);
-		gbc_textField_2.gridx = 3;
-		gbc_textField_2.gridy = 7;
-		getContentPane().add(textField_2, gbc_textField_2);
-		textField_2.setColumns(20);
-		
 		textField.setText("228.4.4.4");
-		textField_2.setText("1");
 		
 		
 		setResizable(false);

@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import bitTorrent.util.ByteUtils;
-import udp.messages.BitTorrentUDPMessage.Action;
 
 /**
  *
