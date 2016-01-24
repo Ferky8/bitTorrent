@@ -119,7 +119,7 @@ public class Peer extends JFrame {
 		getContentPane().add(textField_2, gbc_textField_2);
 		textField_2.setColumns(20);
 		
-		textField.setText("127.0.0.1");
+		textField.setText("228.4.4.4");
 		textField_2.setText("1");
 		
 		

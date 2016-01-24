@@ -174,7 +174,7 @@ public class Configuracion extends JPanel {
 	
 	public void iniciar(String IP, int puerto, int ID, int puertoP) {
 		configuracion.iniciar(IP, puerto, ID);
-		detallesPeer.iniciar("127.0.0.1", puertoP);
+		detallesPeer.iniciar(IP, puertoP);
 	}
 	
 	public void parar(int ID) {

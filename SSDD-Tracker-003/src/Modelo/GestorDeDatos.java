@@ -107,15 +107,17 @@ public class GestorDeDatos {
 		return lp;
 	}
 	
-	public void guardarPeer(String IP, int puerto, String InfoHash) {
-		int id = getPeerId(IP, puerto);
+	public void guardarPeer(String idPeer, String IP, int puerto, String InfoHash, int percent) {
+		String id = getPeerId(IP, puerto);
+		String sqlString;
 		
-		if(id == 0) {
-			String sqlString = "INSERT INTO 'Peer' ('IP', 'Puerto') VALUES (?,?)";
+		if(!id.equals(idPeer)) {
+			sqlString = "INSERT INTO 'Peer' ('Id', 'IP', 'Puerto') VALUES (?,?,?)";
 		
 			try (PreparedStatement stmt = conexion.prepareStatement(sqlString)) {
-				stmt.setString(1, IP);
-				stmt.setInt(2, puerto);
+				stmt.setString(1, idPeer);
+				stmt.setString(2, IP);
+				stmt.setInt(3, puerto);
 				
 				if (stmt.executeUpdate() == 1) {
 					System.out.println("\n - A new peer was inserted. :)");
@@ -128,57 +130,52 @@ public class GestorDeDatos {
 				System.err.println("\n # Error storing a Peer in the db: " + ex.getMessage());
 			}
 			
-			sqlString = "INSERT INTO 'Peer_Torrent' ('IdPeer', 'IdTorrent', 'Percent') VALUES (?,?,?)";
-			
 			id = getPeerId(IP, puerto);
-			
-			try (PreparedStatement stmt = conexion.prepareStatement(sqlString)) {
-				stmt.setInt(1, id);
-				stmt.setString(2, InfoHash);
-				stmt.setInt(3, 100);
-				
-				if (stmt.executeUpdate() == 1) {
-					System.out.println("\n - A new peer_torrent was inserted. :)");
-					conexion.commit();
-				} else {
-					System.err.println("\n - A new peer_torrent wasn't inserted. :(");
-					conexion.rollback();
-				}	
-			} catch (Exception ex) {
-				System.err.println("\n # Error storing peer_torrent in the db: " + ex.getMessage());
-			}
-		} else {
-			String sqlString = "INSERT INTO 'Peer_Torrent' ('IdPeer', 'IdTorrent', 'Percent') VALUES (?,?,?)";
-			
-			try (PreparedStatement stmt = conexion.prepareStatement(sqlString)) {
-				stmt.setInt(1, id);
-				stmt.setString(2, InfoHash);
-				stmt.setInt(3, 100);
-				
-				if (stmt.executeUpdate() == 1) {
-					System.out.println("\n - A new peer_torrent was inserted. :)");
-					conexion.commit();
-				} else {
-					System.err.println("\n - A new peer_torrent wasn't inserted. :(");
-					conexion.rollback();
-				}	
-			} catch (Exception ex) {
-				System.err.println("\n # Error storing peer_torrent in the db: " + ex.getMessage());
-			}
 		}
+			
+		sqlString = "INSERT INTO 'Peer_Torrent' ('IdPeer', 'IdTorrent', 'Percent') VALUES (?,?,?)";
+				
+		try (PreparedStatement stmt = conexion.prepareStatement(sqlString)) {
+			stmt.setString(1, id);
+			stmt.setString(2, InfoHash);
+			stmt.setInt(3, percent);
+			
+			if (stmt.executeUpdate() == 1) {
+				System.out.println("\n - A new peer_torrent was inserted. :)");
+				conexion.commit();
+			} else {
+				System.err.println("\n - A new peer_torrent wasn't inserted. :(");
+				conexion.rollback();
+			}	
+		} catch (Exception ex) {
+			System.err.println("\n # Error storing peer_torrent in the db: " + ex.getMessage());
+		}		
 	}
 	
-	public int getPeerId(String IP, int puerto) {
+	public String getPeerId(String IP, int puerto) {
 		String sqlString = "SELECT id FROM Peer WHERE IP='"+ IP +"' AND Puerto="+ puerto+"";
-		int id = 0;
+		String id = "";
 		try (PreparedStatement stmt = conexion.prepareStatement(sqlString)) {			
 			ResultSet rs = stmt.executeQuery();
-			id = rs.getInt("ID");
+			id = rs.getString("ID");
 			
 		} catch (Exception ex) {
-			System.err.println("\n # Error storing data in the db: " + ex.getMessage());
+			System.err.println("\n # No existing Peer in the db: " + ex.getMessage());
 		}
 		return id;
+	}
+	
+	public int getPeerTorrentPercent(String IP, int puerto, String torrent) {
+		String sqlString = "SELECT t2.percent FROM Peer t1 INNER JOIN Peer_Torrent t2 ON t1.Id = t2.IdPeer WHERE t2.IdTorrent = '" + torrent +"' AND t1.IP = '" + IP + "' AND t1.Puerto = " + puerto + "";
+		int percent = 0;
+		try (PreparedStatement stmt = conexion.prepareStatement(sqlString)) {			
+			ResultSet rs = stmt.executeQuery();
+			percent = rs.getInt("percent");
+			
+		} catch (Exception ex) {
+			System.err.println("\n # Error retrieving percent: " + ex.getMessage());
+		}
+		return percent;
 	}
 	
 	public void insertarDatos(List<String> listaInsertar) {

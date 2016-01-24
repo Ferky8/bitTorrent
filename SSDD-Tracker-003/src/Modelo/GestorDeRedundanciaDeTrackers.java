@@ -254,7 +254,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
         }, 0, 2000);
 	}
 	
-	private void actualizarTrackers(String mensaje) {
+	private void actualizarTrackers(String mensaje, boolean esPorPeer) {
 		
 		if(mensaje.contains("*")) {
 			mensaje = mensaje.substring(1);
@@ -268,6 +268,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
 		} else {
+			System.out.println("PPPRRRRRUUUUUUUUEEEEEEEBBBBBBBAAAAAAAAAA "+Integer.parseInt(mensaje));
 			if(!trackers.containsKey(Integer.parseInt(mensaje))) {
 				trackers.put(Integer.parseInt(mensaje), new Tracker(Integer.parseInt(mensaje), false, new Date()));
 			} else {
@@ -275,8 +276,10 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				t.setUltimoKA(new Date());
 				t.setEsMaster(false);
 				
-				if(mensaje.contains("301"))
+				if(esPorPeer) {
 					t.setPreparadoGuardar(true);
+					System.out.println(Integer.parseInt(mensaje) + " Preparado para guardar");
+				}
 				
 				trackers.put(Integer.parseInt(mensaje), t);
 			}
@@ -352,11 +355,12 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 	}
 	
 	private boolean comprobarTodosOK() {
+		System.out.println("COMPROBANDOOOOOOOOO TODOS OK...................");
 		boolean todosOK = true;
 		
 		for (int key : trackers.keySet()) {
     		Tracker tracker = trackers.get(key);
-    		
+    		System.out.println(key + "         " + tracker.estaPreparadoGuardar());
     		if(!tracker.estaPreparadoGuardar()) {
     			return todosOK = false;
     		}    			
@@ -377,11 +381,12 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 			}
 		}
 		
-		return todosOK;
-	}
-	
-	private void guardarInformacion() {
+		if(todosOK)
+			System.out.println("GUARDAAAAAAAAAAAAAAAAAAAAAAAD");
+		else
+			System.out.println("NO ESTABAN TODOS PREPARADOS PARA GUARDAR");
 		
+		return todosOK;
 	}
 	
 	public void peticionPeerRecibida() {
@@ -392,7 +397,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 			
 			//Dar tiempo a que todos los trackers reciban la peticion del peer
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(200);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
@@ -490,10 +495,6 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 		//System.out.println(" - Sent a message to '" + messageOut.getAddress().getHostAddress() + ":" + messageOut.getPort() + 
         //        "' -> " + new String(messageOut.getData()) + " [" + messageOut.getLength() + " byte(s)]");
 	}
-	
-	public static void main(String args[]) {
-		
-	}
 
 	@Override
 	public void onMessage(Message message) {
@@ -506,7 +507,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				int posInicio = mensaje.indexOf('-');
 				int posFin = mensaje.indexOf('$');
 				mensaje = mensaje.substring(posInicio+1, posFin);
-				actualizarTrackers(mensaje);
+				actualizarTrackers(mensaje, false);
 				
 			} else if(mensaje.contains("200NI") && GestorDeRedundanciaDeTrackers.esMaster) {
 				System.out.println("Recibida peticion de nueva instancia...");
@@ -544,11 +545,13 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 					preparadoGuardar = false;
 				}				
 			} else if(mensaje.contains("301OK") && GestorDeRedundanciaDeTrackers.esMaster) {
-				actualizarTrackers(mensaje);
-				comprobarTodosOK();
+				int posInicio = mensaje.indexOf('-');
+				int posFin = mensaje.indexOf('$');
+				mensaje = mensaje.substring(posInicio+1, posFin);
+				actualizarTrackers(mensaje, true);
 				
 			} else if(mensaje.contains("302GI")) {
-				guardarInformacion();
+				GestorDeTrackerBitTorrent.getInstance().guardarInformacion();
 				
 			} else if(mensaje.contains("400MC")) {
 				int posInicio = mensaje.indexOf('-');

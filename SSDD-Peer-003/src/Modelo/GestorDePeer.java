@@ -39,12 +39,13 @@ public class GestorDePeer implements Runnable {
 
 	@Override
 	public void run() {
+		Random random = new Random();
+		int puertoPeer = random.nextInt(9999);
 		
-			try (DatagramSocket udpSocket = new DatagramSocket()) {
-			
+			try (DatagramSocket udpSocket = new DatagramSocket(puertoPeer)) {
+
 				InetAddress serverHost = InetAddress.getByName(IP);	
 				
-				Random random = new Random();
 				int transactionID = random.nextInt(Integer.MAX_VALUE);
 				 
 				ConnectRequest request = new ConnectRequest();
@@ -81,9 +82,9 @@ public class GestorDePeer implements Runnable {
 						 //UPDATE: 23/12/2015
 						 announce.setInfoHash(ByteUtils.toByteArray("916A6189FFB20F0B20739E6F760C99174625DC2B"));				 
 						 announce.setPeerId(ByteUtils.createPeerId());				 
-						 announce.setDownloaded(0);
+						 announce.setDownloaded(229984459);
 						 announce.setUploaded(0);
-						 announce.setLeft(229984459);
+						 announce.setLeft(0);
 						 announce.setEvent(Event.STARTED);
 						 announce.getPeerInfo().setIpAddress(0);
 						 announce.setKey(new Random().nextInt(Integer.MAX_VALUE));
@@ -114,10 +115,12 @@ public class GestorDePeer implements Runnable {
 							 interval = aResponse.getInterval();
 							 System.out.println("Seeders: " + aResponse.getSeeders() + 
 									            " - Leechers: " + aResponse.getLeechers() + 
-									            " - Interval: " + aResponse.getInterval() );
+									            " - Interval: " + aResponse.getInterval() +
+									            "     " + aResponse.getPeers().get(aResponse.getPeers().size()-1).getPort());
 							 
 							 for (PeerInfo pInfo : aResponse.getPeers()) {
-								 System.out.println(pInfo);
+								 if(pInfo.getIpAddress() != 0)	
+								 	System.out.println(pInfo);
 							 }
 							 
 							 if(interval != 0) {

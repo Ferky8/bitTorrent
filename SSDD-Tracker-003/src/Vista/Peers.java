@@ -7,12 +7,19 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import Controlador.ControladorDetallesPeer;
+import Entidad.Peer;
+import Entidad.Tracker;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class Peers extends JPanel {
+public class Peers extends JPanel implements Observer {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -22,6 +29,7 @@ public class Peers extends JPanel {
 	private DefaultTableModel dtm2;
 	
 	public Peers(ControladorDetallesPeer detallesPeer) {
+		this.detallesPeer = detallesPeer;
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 450, 0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 14, 0, 220, 34, 0};
@@ -65,6 +73,7 @@ public class Peers extends JPanel {
 		dtm2.addColumn("Descarga");
 		dtm2.addColumn("Subida");
 		
+		/*
 		for(int i=0; i < 10; i++) {
 			Object[] fila = new Object[6];
 			
@@ -75,11 +84,29 @@ public class Peers extends JPanel {
 			fila[4] = (int)(Math.random() * ((99999999) + 1));
 			fila[5] = (int)(Math.random() * ((99999999) + 1));
 			dtm2.addRow(fila);
-		}
+		}*/
 		
 		table2.setModel(dtm2);
 		table2.getColumn("Id").setPreferredWidth(36);
 		table2.getColumn("Puerto").setPreferredWidth(24);
+		detallesPeer.anadirObserver(this);
+	}
+
+	@Override
+	public void update(Observable o, Object peer) {
+		Peer p = (Peer) peer;
+		
+		Object[] fila = new Object[6];
+		
+		fila[0] = p.getPeerId();
+		fila[1] = p.getIp();
+		fila[2] = p.getPort();
+		fila[3] = p.getInfoHash();
+		fila[4] = p.getDownloaded();
+		fila[5] = p.getUploaded();
+		dtm2.addRow(fila);
+		
+		table2.setModel(dtm2);
 	}
 	
 }

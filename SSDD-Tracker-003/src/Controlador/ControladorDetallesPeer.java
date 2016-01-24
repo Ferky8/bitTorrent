@@ -1,8 +1,7 @@
 package Controlador;
 
-import java.util.List;
+import java.util.Observer;
 
-import Modelo.GestorDeDatos;
 import Modelo.GestorDeTrackerBitTorrent;
 
 public class ControladorDetallesPeer {	
@@ -11,4 +10,7 @@ public class ControladorDetallesPeer {
 		GestorDeTrackerBitTorrent.getInstance().iniciar(IP, puerto);
 	}
 	
+	public void anadirObserver(Observer o) {
+		GestorDeTrackerBitTorrent.getInstance().anadirObserver(o);
+	}
 }
