@@ -53,4 +53,26 @@ public final class StringUtils {
 	public static String toHexString(byte[] bytes) {
 		return DatatypeConverter.printHexBinary(bytes);
 	}
+	
+	/**
+	 * Transform an String IP to Integer
+	 * @param
+	 * 			ipString String the String of the IP.
+	 * @return
+	 * 			the resulting Integer. 
+	 */
+	public static int toIntegerIpAddress(String ipString) {
+		int[] ip = new int[4];
+		String[] parts = ipString.split("\\.");
+
+		for (int i = 0; i < 4; i++) {
+		    ip[i] = Integer.parseInt(parts[i]);
+		}
+		int ipNumbers = 0;
+		for (int i = 0; i < 4; i++) {
+		    ipNumbers += ip[i] << (24 - (8 * i));
+		}
+		
+		return ipNumbers;
+	}
 }

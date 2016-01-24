@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import bitTorrent.util.ByteUtils;
+import udp.messages.BitTorrentUDPMessage.Action;
 
 /**
  *
@@ -41,6 +42,10 @@ public class AnnounceRequest extends BitTorrentUDPRequestMessage {
 		
 		public int value() {
 			return this.value;
+		}
+		
+		public static Event getEvent(int value) {
+			return Event.values()[value];
 		}
 	}
 	
@@ -90,7 +95,38 @@ public class AnnounceRequest extends BitTorrentUDPRequestMessage {
 	}
 	
 	public static AnnounceRequest parse(byte[] byteArray) {
-		//TODO: Complete this method
+		try {
+		    ByteBuffer buffer = ByteBuffer.wrap(byteArray);
+		    buffer.order(ByteOrder.BIG_ENDIAN);
+		    
+		    AnnounceRequest msg = new AnnounceRequest();
+		    
+		    msg.setConnectionId(buffer.getLong(0));
+		    msg.setAction(Action.valueOf(buffer.getInt(8)));
+		    msg.setTransactionId(buffer.getInt(12));
+		    byte[] infoHash = new byte[20];
+		    buffer.position(16);
+		    buffer.get(infoHash);
+	        msg.setInfoHash(infoHash);
+		    byte[] peerId = new byte[20];
+		    buffer.position(36);
+		    buffer.get(peerId);
+		    msg.setPeerId(new String(peerId));
+		    msg.setDownloaded(buffer.getLong(56));
+		    msg.setLeft(buffer.getLong(64));
+		    msg.setUploaded(buffer.getLong(72));
+		    msg.setEvent(Event.getEvent(buffer.getInt(80)));
+	        PeerInfo peerInfo = new PeerInfo();
+	        peerInfo.setIpAddress(buffer.getInt(84));
+	        peerInfo.setPort(buffer.getChar(96));
+	        msg.setPeerInfo(peerInfo);
+	        msg.setKey(buffer.getInt(88));
+	        msg.setNumWant(buffer.getInt(92));
+		    
+		    return msg;
+		} catch (Exception ex) {
+			System.out.println("# Error parsing ConnectRequest message: " + ex.getMessage());
+		}
 		
 		return null;
 	}

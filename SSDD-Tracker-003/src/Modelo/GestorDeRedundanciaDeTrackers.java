@@ -50,7 +50,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 	private static Timer timerKA;
 	private static Timer timerCT;
 	private static Timer timerOK;
-	private GestorDeDatos gestorDeDatos;
+	public GestorDeDatos gestorDeDatos;
 	
 	String connectionFactoryName = "TopicConnectionFactory";
 	String topicJNDIName = "jndi.ssdd.topic";		
@@ -335,7 +335,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 		if(trackers.isEmpty()) {
 			GestorDeRedundanciaDeTrackers.ID = 1;
 			GestorDeRedundanciaDeTrackers.esMaster = true;
-			gestorDeDatos = new GestorDeDatos("db/1BaseDeDatos.db");
+			gestorDeDatos = GestorDeDatos.getInstance("db/1BaseDeDatos.db");
 			dbCompleta = true;
 			estado = 1;
 			cambiarEstado();
@@ -522,7 +522,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 				rutaDB = "db/"+GestorDeRedundanciaDeTrackers.ID+"BaseDeDatos.db";
 				if(GestorDeRedundanciaDeTrackers.ID == 1) {
 					dbCompleta = true;
-					gestorDeDatos = new GestorDeDatos(rutaDB);
+					gestorDeDatos = GestorDeDatos.getInstance(rutaDB);
 					estado = 1;
 					cambiarEstado();
 				} else {
@@ -572,7 +572,7 @@ public class GestorDeRedundanciaDeTrackers extends Observable implements Message
 					}
 					dbCompleta = true;
 					System.out.println("Completada la BD :)");
-					gestorDeDatos = new GestorDeDatos(rutaDB);
+					gestorDeDatos = GestorDeDatos.getInstance(rutaDB);
 					estado = 1;
 					cambiarEstado();
 				}

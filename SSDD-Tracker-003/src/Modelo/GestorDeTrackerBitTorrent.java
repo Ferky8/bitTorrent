@@ -8,6 +8,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import udp.messages.AnnounceRequest;
+import udp.messages.AnnounceResponse;
 import udp.messages.ConnectRequest;
 import udp.messages.ConnectResponse;
 
@@ -69,11 +71,41 @@ public class GestorDeTrackerBitTorrent implements Runnable {
 				response.setTransactionId(request.getTransactionId());
 				response.setConnectionId(request.getConnectionId());
 				
-				System.out.println("Response: " + response.getAction() + " " + response.getTransactionId() + " " + response.getConnectionId());
-				 
 				byte[] byteMsg = response.getBytes();
 				send = new DatagramPacket(byteMsg, byteMsg.length, receive.getAddress(), receive.getPort());
-				udpSocket.send(send);				
+				udpSocket.send(send);
+				
+				System.out.println(" - Sent a response to '" + receive.getAddress().getHostAddress() + ":" + receive.getPort() + 
+		                   "' -> " + new String(send.getData()) + " [" + receive.getLength() + " byte(s)]");
+				System.out.println("Connect Response: " + response.getAction() + " " + response.getTransactionId() + " " + response.getConnectionId());
+				
+				receive = new DatagramPacket(buffer, buffer.length);
+				udpSocket.receive(receive);
+				
+				System.out.println(" - Received an announce request from '" + receive.getAddress().getHostAddress() + ":" + receive.getPort() + 
+		                   "' -> " + new String(receive.getData()) + " [" + receive.getLength() + " byte(s)]");
+				
+				AnnounceRequest announceReq = AnnounceRequest.parse(receive.getData());
+				
+				System.out.println("Announce Request: " + announceReq.getAction() + " " + announceReq.getTransactionId() + " " + announceReq.getConnectionId()
+				 + " " + announceReq.getHexInfoHash() + " " + announceReq.getPeerId()+ " " + announceReq.getLeft()+ " " + announceReq.getEvent().name());
+				
+				AnnounceResponse announceResp = new AnnounceResponse();
+				announceResp.setInterval(3);
+				announceResp.setLeechers(5);
+				announceResp.setSeeders(4);
+				announceResp.setTransactionId(announceReq.getTransactionId());
+				announceResp.setPeers(GestorDeRedundanciaDeTrackers.getInstance().gestorDeDatos.getListaPeers(announceReq.getHexInfoHash()));
+				
+				//Guardar la informacion del Peer en la DB
+				
+				byteMsg = announceResp.getBytes();
+				send = new DatagramPacket(byteMsg, byteMsg.length, receive.getAddress(), receive.getPort());
+				udpSocket.send(send);
+				
+				System.out.println(" - Sent an announce response to '" + receive.getAddress().getHostAddress() + ":" + receive.getPort() + 
+		                   "' -> " + new String(send.getData()) + " [" + receive.getLength() + " byte(s)]");
+				System.out.println("Announce Response: " + announceResp.getAction() + " " + announceResp.getTransactionId());
 				
 			} catch (IOException e) {
 				System.err.println("# UDPServer IO error: " + e.getMessage());
