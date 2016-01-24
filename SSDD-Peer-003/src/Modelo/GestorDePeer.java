@@ -99,23 +99,31 @@ public class GestorDePeer implements Runnable {
 						 System.out.println("Announce Request: " + announce.getAction() + " " + announce.getTransactionId() + " " + announce.getConnectionId()
 						 + " " + announce.getHexInfoHash() + " " + announce.getPeerId()+ " " + announce.getLeft()+ " " + announce.getEvent().name());
 						 
-						 result = new byte[64];				 
-						 packet = new DatagramPacket(result, result.length);
-						 udpSocket.receive(packet);
-						 
-						 System.out.println(" - Received an announce response from '" + IP + ":" + packet.getPort() + 
-						           "' -> " + new String(packet.getData()) + " [" + packet.getLength() + " byte(s)]");
-						 System.out.println("Announce Response: " + packet.getData().length);
-						 
-						 AnnounceResponse aResponse = AnnounceResponse.parse(packet.getData());
-						 
-						 System.out.println("Seeders: " + aResponse.getSeeders() + 
-								            " - Leechers: " + aResponse.getLeechers() + 
-								            " - Interval: " + aResponse.getInterval() );
-						 
-						 for (PeerInfo pInfo : aResponse.getPeers()) {
-							 System.out.println(pInfo);
-						 }
+						 int interval;
+						 do {
+							 result = new byte[128];				 
+							 packet = new DatagramPacket(result, result.length);
+							 udpSocket.receive(packet);
+							 
+							 System.out.println(" - Received an announce response from '" + IP + ":" + packet.getPort() + 
+							           "' -> " + new String(packet.getData()) + " [" + packet.getLength() + " byte(s)]");
+							 System.out.println("Announce Response: " + packet.getData().length);
+							 
+							 AnnounceResponse aResponse = AnnounceResponse.parse(packet.getData());
+							 
+							 interval = aResponse.getInterval();
+							 System.out.println("Seeders: " + aResponse.getSeeders() + 
+									            " - Leechers: " + aResponse.getLeechers() + 
+									            " - Interval: " + aResponse.getInterval() );
+							 
+							 for (PeerInfo pInfo : aResponse.getPeers()) {
+								 System.out.println(pInfo);
+							 }
+							 
+							 if(interval != 0) {
+								 Thread.sleep(interval);
+							 }
+						 } while(interval != 0);
 					 }
 				 } else {
 					 System.err.println("- Response length is: " + packet.getLength());
