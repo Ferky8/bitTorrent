@@ -19,13 +19,10 @@ public class Peers extends JPanel implements Observer {
 
 	private static final long serialVersionUID = 1L;
 	
-	private ControladorDetallesPeer detallesPeer;
-	
 	private JTable table2;
 	private DefaultTableModel dtm2;
 	
 	public Peers(ControladorDetallesPeer detallesPeer) {
-		this.detallesPeer = detallesPeer;
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 450, 0, 0};
 		gridBagLayout.rowHeights = new int[]{0, 14, 0, 220, 34, 0};
